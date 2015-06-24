@@ -8,7 +8,7 @@ and Node = Type * Variable
 
 and Expr = string (* TODO: Parse BPF later *)
 
-and Edge = Node * Node * Expr * Expr
+and Edge = Variable * Variable * Expr * Expr
 
 and SubGraph = Edge list
 

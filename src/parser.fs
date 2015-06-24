@@ -2,11 +2,6 @@ module Parser
 
 open FParsec
 
-let test p str = 
-    match run p str with 
-    | Success(result, _, _) -> printfn "Success: %A" result
-    | Failure(errorMsg, _, _) -> printfn "Failure: %s" errorMsg
-
 let ptype = 
     let opts = IdentifierOptions(isAsciiIdStart = isAsciiUpper)
     identifier opts .>> spaces
@@ -18,8 +13,8 @@ let pvar =
 let pnode = 
     ptype .>>. pvar .>> pchar ';' .>> spaces 
 
-let pnode_decl = 
-    pnode |>> (fun node -> Ast.NodeDecl(node))
+let pnodedecl = 
+    pnode |>> Ast.NodeDecl
 
 let pexpr = 
     let str s = pstring s
@@ -37,11 +32,52 @@ let pedge =
     let arrow = pstring "->" .>> spaces
     pipe5 pvar attr arrow attr pvar (fun a b c d e -> (a, e, b, d)) .>> pchar ';' .>> spaces
 
+let psubgraph = 
+    between (pstring "TC {" .>> spaces) (pstring "}" .>> spaces) 
+            (many pedge) .>> spaces
+
+let ptrafficclass = 
+    psubgraph |>> Ast.TraffcClass
+
+let ptoplevel = 
+    spaces >>. many (ptrafficclass <|> pnodedecl)
+
+let test p str = 
+    match run p str with 
+    | Success(result, _, _) -> printfn "Success: %A" result
+    | Failure(errorMsg, _, _) -> printfn "Failure: %s" errorMsg
+
+let example_code = """
+Proxy proxy;
+NAT nat;
+Firewall fw;
+Ports cp;
+Ports ep;
+
+TC {
+    cp["dst port 80"] -> proxy;
+    cp["!(dst port 80)"] -> nat;
+    proxy -> nat;
+    nat -> fw;
+    fw["fw safe"] -> ep;
+}
+
+
+TC {
+    ep -> nat;
+    nat["src port 80"] -> proxy;
+    nat["!(src port 80)"] -> fw;
+    proxy -> fw;
+    fw["fw safe"] -> cp;
+}
+"""
+
 [<EntryPoint>]
 let main args = 
     test ptype "Firewall  "
     test ptype "firewall "
     test pvar "firewall "
-    test pnode_decl "Firewall fw   ;  "
+    test pnodedecl "Firewall fw   ;  "
     test pedge "fw[\"safe\"] -> nat; "
+    test ptoplevel example_code
     0
