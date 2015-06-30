@@ -1,6 +1,8 @@
 module Parser
 
 open FParsec
+open System
+open System.Collections.Generic
 
 let ptype = 
     let opts = IdentifierOptions(isAsciiIdStart = isAsciiUpper)
@@ -72,12 +74,26 @@ TC {
 }
 """
 
+type ParseState = {
+    V : Map<string, string>;
+    E : Ast.Edge list list;
+}
+
+let ParseTopLevels (lst: Ast.TopLevel list) =
+    let state = { V = Map.empty; E = [] }
+    let handleTopLevel s toplevel =
+        match toplevel with
+        | Ast.NodeDecl (t, v) ->
+            match Map.tryFind v s.V with
+            | Some _ -> failwith ("Redefined NF: " + v + ", Type: " + t)
+            | None -> { V = Map.add v t s.V; E = s.E }
+        | Ast.TraffcClass g ->
+            { V = s.V; E = g :: s.E}
+    List.fold handleTopLevel state lst
+
 [<EntryPoint>]
 let main args = 
-    test ptype "Firewall  "
-    test ptype "firewall "
-    test pvar "firewall "
-    test pnodedecl "Firewall fw   ;  "
-    test pedge "fw[\"safe\"] -> nat; "
-    test ptoplevel example_code
+    match run ptoplevel example_code with
+    | Success(result, _, _) -> printfn "%A" (ParseTopLevels result)
+    | Failure(errorMsg, _, _) -> printfn "Failure: %s" errorMsg
     0

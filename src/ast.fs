@@ -12,6 +12,6 @@ and Edge = Variable * Variable * Expr * Expr
 
 and SubGraph = Edge list
 
-and Toplevel = 
+and TopLevel = 
     | NodeDecl of Node
     | TraffcClass of SubGraph
