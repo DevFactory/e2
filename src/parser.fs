@@ -44,35 +44,10 @@ let ptrafficclass =
 let ptoplevel = 
     spaces >>. many (ptrafficclass <|> pnodedecl)
 
-let test p str = 
+let test p str fn = 
     match run p str with 
-    | Success(result, _, _) -> printfn "Success: %A" result
-    | Failure(errorMsg, _, _) -> printfn "Failure: %s" errorMsg
-
-let example_code = """
-Proxy proxy;
-NAT nat;
-Firewall fw;
-Ports cp;
-Ports ep;
-
-TC {
-    cp["dst port 80"] -> proxy;
-    cp["!(dst port 80)"] -> nat;
-    proxy -> nat;
-    nat -> fw;
-    fw["fw safe"] -> ep;
-}
-
-
-TC {
-    ep -> nat;
-    nat["src port 80"] -> proxy;
-    nat["!(src port 80)"] -> fw;
-    proxy -> fw;
-    fw["fw safe"] -> cp;
-}
-"""
+    | Success(result, _, _) -> fn result
+    | Failure(errorMsg, _, _) -> failwith "Failure: %s" errorMsg
 
 type ParseState = {
     V : Map<string, string>;
@@ -91,9 +66,6 @@ let ParseTopLevels (lst: Ast.TopLevel list) =
             { V = s.V; E = g :: s.E}
     List.fold handleTopLevel state lst
 
-[<EntryPoint>]
-let main args = 
-    match run ptoplevel example_code with
-    | Success(result, _, _) -> printfn "%A" (ParseTopLevels result)
-    | Failure(errorMsg, _, _) -> printfn "Failure: %s" errorMsg
-    0
+let Parse str =
+    test ptoplevel str ParseTopLevels
+
