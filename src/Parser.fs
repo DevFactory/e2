@@ -1,4 +1,4 @@
-module Parser
+module E2.Parser 
 
 open FParsec
 open System

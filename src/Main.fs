@@ -1,3 +1,5 @@
+module E2.Main
+
 let example = """
 Proxy proxy;
 NAT nat;
