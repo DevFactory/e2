@@ -1,17 +1,22 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.22823.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "e2", "e2.fsproj", "{97F75ABE-AF45-473D-9ECD-FDDFCA5035F3}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{34ECB877-55E9-4C50-81D2-8E68094F1755}"
+	ProjectSection(SolutionItems) = preProject
+		paket.dependencies = paket.dependencies
+	EndProjectSection
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "e2", "e2.fsproj", "{3A1E4E7E-04DE-420E-BE8C-2F89C8F2C297}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Build Standalone|Any CPU = Build Standalone|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{97F75ABE-AF45-473D-9ECD-FDDFCA5035F3}.Build Standalone|Any CPU.ActiveCfg = Debug|Any CPU
-		{97F75ABE-AF45-473D-9ECD-FDDFCA5035F3}.Build Standalone|Any CPU.Build.0 = Debug|Any CPU
+		{3A1E4E7E-04DE-420E-BE8C-2F89C8F2C297}.Build Standalone|Any CPU.ActiveCfg = Debug|Any CPU
+		{3A1E4E7E-04DE-420E-BE8C-2F89C8F2C297}.Build Standalone|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
