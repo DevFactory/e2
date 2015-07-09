@@ -44,7 +44,8 @@ type Graph(state: Parser.ParseState) =
         let OnFormatVertex(e: FormatVertexEventArgs<VF>) = 
             e.VertexFormatter.Label <- e.Vertex.name
         let OnFormatEdge(e: FormatEdgeEventArgs<VF, TaggedEdge<VF, Attribute>>) = 
-            e.EdgeFormatter.Label.Value <- e.Edge.Tag.filter
+            let attr = e.Edge.Tag
+            e.EdgeFormatter.Label.Value <- string attr.pipelet_id + ": " + attr.filter
         graphviz.FormatVertex.Add(OnFormatVertex)
         graphviz.FormatEdge.Add(OnFormatEdge)
         graphviz.Generate(new FileDotEngine(), "")
