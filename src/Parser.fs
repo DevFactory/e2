@@ -51,7 +51,7 @@ let test p str fn =
 
 type ParseState = {
     V : Map<string, string>;
-    E : Ast.Edge list list;
+    E : (string * string * string * string) list list;
 }
 
 let ParseTopLevels (lst: Ast.TopLevel list) =

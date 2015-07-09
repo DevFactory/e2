@@ -1,7 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <PropertyGroup Label="Globals">		
-    <ProjectGuid>{97f75abe-af45-473d-9ecd-fddfca5035f3}</ProjectGuid>		
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{97f75abe-af45-473d-9ecd-fddfca5035f3}</ProjectGuid>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup>
     <AssemblyName>e2</AssemblyName>
@@ -29,25 +31,6 @@
     </Otherwise>
   </Choose>
   <Import Project="$(FSharpTargetsPath)" Condition="Exists('$(FSharpTargetsPath)')" />
-  <ItemGroup>
-    <Compile Include="src/Ast.fs" />
-    <Compile Include="src/Parser.fs" />
-    <Compile Include="src/Main.fs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="QuickGraph">
-      <HintPath>packages\QuickGraph\lib\net4\QuickGraph.dll</HintPath>
-    </Reference>
-    <Reference Include="QuickGraph.Data">
-      <HintPath>packages\QuickGraph\lib\net4\QuickGraph.Data.dll</HintPath>
-    </Reference>
-    <Reference Include="QuickGraph.Graphviz">
-      <HintPath>packages\QuickGraph\lib\net4\QuickGraph.Graphviz.dll</HintPath>
-    </Reference>
-    <Reference Include="QuickGraph.Serialization">
-      <HintPath>packages\QuickGraph\lib\net4\QuickGraph.Serialization.dll</HintPath>
-    </Reference>
-  </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
@@ -71,4 +54,29 @@
       </ItemGroup>
     </When>
   </Choose>
+  <ItemGroup>
+    <Compile Include="src/Ast.fs" />
+    <Compile Include="src/Parser.fs" />
+    <Compile Include="src\Graph.fs" />
+    <Compile Include="src/Main.fs" />
+    <Content Include="App.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="QuickGraph">
+      <HintPath>packages\QuickGraph\lib\net4\QuickGraph.dll</HintPath>
+    </Reference>
+    <Reference Include="QuickGraph.Data">
+      <HintPath>packages\QuickGraph\lib\net4\QuickGraph.Data.dll</HintPath>
+    </Reference>
+    <Reference Include="QuickGraph.Graphviz">
+      <HintPath>packages\QuickGraph\lib\net4\QuickGraph.Graphviz.dll</HintPath>
+    </Reference>
+    <Reference Include="QuickGraph.Serialization">
+      <HintPath>packages\QuickGraph\lib\net4\QuickGraph.Serialization.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
 </Project>

@@ -1,5 +1,7 @@
 module E2.Main
 
+open System
+
 let example = """
 Proxy proxy;
 NAT nat;
@@ -28,4 +30,6 @@ TC {
 [<EntryPoint>]
 let main args = 
     let state = Parser.Parse example
+    let g = Graph.Graph(state)
+    printfn "%s" (g.ToGraphML())
     0
