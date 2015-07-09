@@ -59,9 +59,6 @@
     <Compile Include="src/Parser.fs" />
     <Compile Include="src\Graph.fs" />
     <Compile Include="src/Main.fs" />
-    <Content Include="App.config">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="QuickGraph">
