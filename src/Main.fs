@@ -31,5 +31,6 @@ TC {
 let main args = 
     let state = Parser.Parse example
     let g = Graph.Graph(state)
-    printfn "%s" (g.ToGraphML())
+    let graphviz = g.ToGraphViz()
+    printfn "%s" (graphviz)
     0
