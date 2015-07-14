@@ -31,6 +31,10 @@ TC {
 let main args = 
     let state = Parser.Parse example
     let g = Graph.Graph(state)
-    let graphviz = g.ToGraphViz()
+
+    printfn "%A" (g.PlaceRandom(10))
+
+    let graphviz = g.Visualize()
     printfn "%s" (graphviz)
+
     0
