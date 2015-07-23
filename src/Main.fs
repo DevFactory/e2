@@ -34,7 +34,10 @@ let main args =
 
     printfn "%A" (g.PlaceRandom(10))
 
+    printfn "%A" (g.PlaceBreadthFirstSearch(10, 1.0))
+
     let graphviz = g.Visualize()
     printfn "%s" (graphviz)
 
+    printfn "%s" (g.VisualizeFlatGraph())
     0
