@@ -110,12 +110,13 @@ type Graph(state: Parser.ParseState) =
         let mutable host = 0
         let mutable result = []
 
-        let place_nf (nf: NF) =
-            if nf.core < cores then
-                cores <- cores - nf.core
+        let place_nf (nf: NF) (load: float) =
+            let core = nf.core * load
+            if core < cores then
+                cores <- cores - core
                 result <- (nf.id, host) :: result
             else
-                cores <- cores_per_host - nf.core
+                cores <- cores_per_host - core
                 host <- host + 1
                 result <- (nf.id, host) :: result
         
@@ -134,7 +135,7 @@ type Graph(state: Parser.ParseState) =
                                    |> Seq.head
             colors.[start] <- GraphColor.Gray
             pending.Enqueue(start)
-            place_nf start
+            place_nf start 1.0
 
         // main bfs loop
         while pending.Count <> 0 do
@@ -147,6 +148,7 @@ type Graph(state: Parser.ParseState) =
                 if colors.[v] = GraphColor.White then
                     colors.[v] <- GraphColor.Gray
                     pending.Enqueue(v)
-                    place_nf v
+                    place_nf v e.Tag.load
 
         result
+
