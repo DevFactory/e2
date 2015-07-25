@@ -5,32 +5,30 @@ open QuickGraph.Graphviz
 open QuickGraph.Serialization
 open QuickGraph.Algorithms
 open System
+open System.Collections.Generic
 
-type NF(name: string, t: string) =
-    member val id = Guid.NewGuid()
+type PolicyNF(name: string, t: string) = 
     member val name = name with get, set
     member val t = t with get, set
     member val core = 
         match t with
         | _ -> 1.0
-
-    override this.Equals(obj) =
-        match obj with
-        | :? NF as o -> this.name.Equals(o.name)
-        | _ -> false
-
-    override this.GetHashCode() = this.name.GetHashCode()
+    member val instances = List<InstanceNF>() with get, set
+and InstanceNF(parent: PolicyNF) = 
+    member val id = Guid.NewGuid()
+    member val parent = parent
 
 
 [<NoEquality; NoComparison>]
-type EdgeTag(filter: string, attr: string, pipelet: int) = 
-    member val id = Guid.NewGuid()
+type PolicyEdgeTag(filter: string, attr: string, pipelet: int) = 
     member val filter = filter with get, set
     member val attribute = attr with get, set
     member val pipelet = pipelet with get, set
-    member val load = 1.0 with get, set // TODO
-
-    member this.SetLoad(load: float) = this.load <- load
+    member val instances = List<InstanceEdgeTag>() with get, set
+and InstanceEdgeTag(parent: PolicyEdgeTag) =
+    member val id = Guid.NewGuid()
+    member val parent = parent
+    member val load = 1.0 with get, set
 
 
 type FileDotEngine() = 
@@ -40,42 +38,67 @@ type FileDotEngine() =
 
 
 type Graph(state: Parser.ParseState) = 
-    // Internal graph
-    let graph = new BidirectionalGraph<NF, TaggedEdge<NF, EdgeTag>>()
-    
-    // Add vertices
-    let _ = 
+    let CreatePolicyGraph (state: Parser.ParseState) = 
+        let graph = new BidirectionalGraph<PolicyNF, TaggedEdge<PolicyNF, PolicyEdgeTag>>()
+        
         let nfs = state.V |> Map.toList |> List.map (fun (key, value) -> 
-            new NF(key, value))
-        (nfs |> List.fold (fun result nf -> result && graph.AddVertex(nf)) true)
-    
-    // Add edges
-    let _ = (state.E |> List.mapi (fun i lst ->
-        let add_edge result (v1, v2, e1, e2) =
-            let tag = new EdgeTag(e1, e2, i)
-            let vertex1 = graph.Vertices |> Seq.filter (fun v -> v.name = v1) |> Seq.head
-            let vertex2 = graph.Vertices |> Seq.filter (fun v -> v.name = v2) |> Seq.head
-            let edge = new TaggedEdge<NF, EdgeTag>(vertex1, vertex2, tag)
-            result && graph.AddEdge(edge)
-        List.fold add_edge true lst) |> List.fold (fun result r -> result && r) true)
+            new PolicyNF(key, value))
+
+        nfs |> List.fold (fun result nf -> result && graph.AddVertex(nf)) true
+            |> ignore
+
+        state.E |> List.mapi (fun i lst ->
+            let add_edge result (v1, v2, e1, e2) =
+                let tag = new PolicyEdgeTag(e1, e2, i)
+                let vertex1 = graph.Vertices |> Seq.filter (fun v -> v.name = v1) |> Seq.head
+                let vertex2 = graph.Vertices |> Seq.filter (fun v -> v.name = v2) |> Seq.head
+                let edge = new TaggedEdge<PolicyNF, PolicyEdgeTag>(vertex1, vertex2, tag)
+                result && graph.AddEdge(edge)
+            List.fold add_edge true lst) 
+                |> List.fold (fun result r -> result && r) true
+                |> ignore
+        
+        graph
+
+    let CreateInstanceGraph (instance_graph: BidirectionalGraph<PolicyNF, TaggedEdge<PolicyNF, PolicyEdgeTag>>) =
+        let graph = new BidirectionalGraph<InstanceNF, TaggedEdge<InstanceNF, InstanceEdgeTag>>()
+
+        instance_graph.Vertices |> Seq.fold (fun r v -> 
+            let v' = new InstanceNF(v)
+            v.instances.Add(v')
+            r && graph.AddVertex(v')) true
+                                |> ignore
+
+        instance_graph.Edges |> Seq.fold (fun r e -> 
+            let v1 = e.Source.instances.[0]
+            let v2 = e.Target.instances.[0]
+            let tag = new InstanceEdgeTag(e.Tag)
+            let e' = new TaggedEdge<InstanceNF, InstanceEdgeTag>(v1, v2, tag)
+            r && graph.AddEdge(e')) true
+                             |> ignore
+        
+        graph
+
+    let pgraph = CreatePolicyGraph(state)
+    let igraph = CreateInstanceGraph(pgraph)
 
     member this.Visualize() = 
-        let graphviz = new GraphvizAlgorithm<NF, TaggedEdge<NF, EdgeTag>>(graph)
-        let OnFormatVertex(e: FormatVertexEventArgs<NF>) = 
-            e.VertexFormatter.Label <- e.Vertex.name + " " + e.Vertex.id.ToString()
-        let OnFormatEdge(e: FormatEdgeEventArgs<NF, TaggedEdge<NF, EdgeTag>>) = 
-            let attr = e.Edge.Tag
-            e.EdgeFormatter.Label.Value <- string attr.pipelet + ": " + attr.filter
+        let graphviz = new GraphvizAlgorithm<InstanceNF, TaggedEdge<InstanceNF, InstanceEdgeTag>>(igraph)
+        let OnFormatVertex(e: FormatVertexEventArgs<InstanceNF>) = 
+            e.VertexFormatter.Label <- e.Vertex.parent.name + " " + e.Vertex.id.ToString()
+        let OnFormatEdge(e: FormatEdgeEventArgs<InstanceNF, TaggedEdge<InstanceNF, InstanceEdgeTag>>) = 
+            let tag = e.Edge.Tag.parent
+            e.EdgeFormatter.Label.Value <- string tag.pipelet + ": " + tag.filter
         graphviz.FormatVertex.Add(OnFormatVertex)
         graphviz.FormatEdge.Add(OnFormatEdge)
         graphviz.Generate(new FileDotEngine(), "")
 
     member this.VisualizeFlatGraph() = 
         let g = this.FlatGraph()
-        let graphviz = new GraphvizAlgorithm<NF, TaggedEdge<NF, EdgeTag>>(g)
-        let OnFormatVertex (e: FormatVertexEventArgs<NF>) = 
-            e.VertexFormatter.Label <- e.Vertex.name + " " + e.Vertex.id.ToString()
-        let OnFormatEdge (e: FormatEdgeEventArgs<NF, TaggedEdge<NF, EdgeTag>>) = 
+        let graphviz = new GraphvizAlgorithm<InstanceNF, TaggedEdge<InstanceNF, InstanceEdgeTag>>(g)
+        let OnFormatVertex (e: FormatVertexEventArgs<InstanceNF>) = 
+            e.VertexFormatter.Label <- e.Vertex.parent.name + " " + e.Vertex.id.ToString()
+        let OnFormatEdge (e: FormatEdgeEventArgs<InstanceNF, TaggedEdge<InstanceNF, InstanceEdgeTag>>) = 
             e.EdgeFormatter.Label.Value <- string e.Edge.Tag.load
         graphviz.FormatVertex.Add(OnFormatVertex)
         graphviz.FormatEdge.Add(OnFormatEdge)
@@ -83,51 +106,46 @@ type Graph(state: Parser.ParseState) =
         str.Replace("->", "--")
 
     member private this.FlatGraph() = 
-        let g = new UndirectedGraph<NF, TaggedEdge<NF, EdgeTag>>(false)
-        let _ = graph.Vertices |> Seq.fold (fun r v -> r && g.AddVertex(v)) true 
-        for v1 in graph.Vertices do
-            for v2 in graph.Vertices do
-                if graph.ContainsEdge(v1, v2) || graph.ContainsEdge(v2, v1) then
-                    let edges = 
-                        graph.Edges |> Seq.filter (fun e -> (e.Source.Equals(v1) && e.Target.Equals(v2)) ||
-                                                            (e.Source.Equals(v2) && e.Target.Equals(v1)))
-                    let max_weight_edge = 
-                        edges |> Seq.reduce 
-                            (fun (a: TaggedEdge<NF, EdgeTag>) (b: TaggedEdge<NF, EdgeTag>) -> 
-                                if a.Tag.load > b.Tag.load then a else b) 
-
+        let g = new UndirectedGraph<InstanceNF, TaggedEdge<InstanceNF, InstanceEdgeTag>>(false)
+        let _ = igraph.Vertices |> Seq.fold (fun r v -> r && g.AddVertex(v)) true 
+        for v1 in igraph.Vertices do
+            for v2 in igraph.Vertices do
+                let edges = igraph.Edges |> Seq.filter (fun e -> (e.Source.Equals(v1) && e.Target.Equals(v2)) ||
+                                                                 (e.Source.Equals(v2) && e.Target.Equals(v1)))
+                if not (Seq.isEmpty edges) then
+                    let max_weight_edge = edges |> Seq.reduce (fun a b -> if a.Tag.load > b.Tag.load then a else b)
                     g.AddEdge(max_weight_edge) |> ignore
         g
 
     member this.PlaceRandom(k: int) = 
         let rand = new System.Random()
-        graph.Vertices |> Seq.map (fun v -> (v.id, rand.Next(k))) |> Seq.toList
+        igraph.Vertices |> Seq.map (fun v -> (v.id, rand.Next(k))) |> Seq.toList
        
-    member this.PlaceBreadthFirstSearch(k: int, cores_per_host: float) = 
+    member this.PlaceBreadthFirstSearch(k: int, host_cores: float []) = 
         let g = this.FlatGraph()
-        
-        let mutable cores = cores_per_host
+                
         let mutable host = 0
+        let mutable cores = host_cores.[host]
         let mutable result = []
 
-        let place_nf (nf: NF) (load: float) =
-            let core = nf.core * load
+        let place_nf (nf: InstanceNF) (load: float) =
+            let core = nf.parent.core * load
             if core < cores then
                 cores <- cores - core
                 result <- (nf.id, host) :: result
             else
-                cores <- cores_per_host - core
                 host <- host + 1
+                cores <- host_cores.[host] - core
                 result <- (nf.id, host) :: result
         
-        let colors = new Collections.Generic.Dictionary<NF, GraphColor>()
-        let pending = new Collections.Generic.Queue<NF>()
+        let colors = new Collections.Generic.Dictionary<InstanceNF, GraphColor>()
+        let pending = new Collections.Generic.Queue<InstanceNF>()
         
         // initialize
         g.Vertices |> Seq.iter (fun v -> colors.Add(v, GraphColor.White))
 
         // enqueue heads
-        let components = new Collections.Generic.Dictionary<NF, int>()
+        let components = new Collections.Generic.Dictionary<InstanceNF, int>()
         let component_count = g.ConnectedComponents(components)
         for i = 0 to component_count-1 do
             let start = components |> Seq.filter (fun kv -> kv.Value = i)

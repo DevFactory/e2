@@ -4,6 +4,8 @@
     <ProjectGuid>{97f75abe-af45-473d-9ecd-fddfca5035f3}</ProjectGuid>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <TargetFrameworkProfile />
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup>
     <AssemblyName>e2</AssemblyName>
@@ -60,6 +62,7 @@
     <Compile Include="src\Graph.fs" />
     <Compile Include="src\ResourceManager.fs" />
     <Compile Include="src/Main.fs" />
+    <Content Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="QuickGraph">

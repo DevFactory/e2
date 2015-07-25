@@ -1,17 +1,30 @@
 ﻿module E2.ResourceManager
 
-type Host(id: int, cores: double) = 
+open System.Collections.Generic
+open Graph
+
+type Host(id: int, cores: float) = 
     member val id = id
-    member val cores = cores with get, set
-    
-    override this.Equals(obj) = 
-        match obj with
-        | :? Host as o -> this.id.Equals(o.id)
-        | _ -> false
+    member val total_cores = cores with get, set
+    member val used_cores = 0.0 with get, set
 
-    override this.GetHashCode() = hash this.id
+type Manager(policy: string) = 
+    member val hosts = List<Host>() with get, set
+    member val placement = Dictionary<InstanceNF, Host>() with get, set
+    member val graph = policy |> Parser.Parse |> Graph.Graph
 
-type Manager() = 
-    member val hosts = [] with get, set
-    member this.AddHost(host: Host) = 
-        this.hosts <- host :: this.hosts
+    member this.HomogeneousHosts(num_hosts: int, num_cores: float) = 
+        for i = 0 to num_hosts-1 do 
+            this.hosts.Add(new Host(i, num_cores))
+
+    member this.InitiateNF(nf: InstanceNF , host: Host) = 
+        this.placement.Add(nf, host)
+        // step 1: spawn the nf using the controller channel
+        
+        // step 2: set up the chain
+
+
+    member this.InitialPlacement() = 
+        let n = this.hosts.Count
+        let cores = this.hosts |> Seq.map (fun h -> h.total_cores - h.used_cores) |> Seq.toArray
+        this.graph.PlaceBreadthFirstSearch(n, cores)
