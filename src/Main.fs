@@ -30,10 +30,6 @@ TC {
 [<EntryPoint>]
 let main args = 
     let state = Parser.Parse example
-    let g = Graph.Graph(state)
-
-    let graphviz = g.Visualize()
-    printfn "%s" (graphviz)
-
-    printfn "%s" (g.VisualizeFlatGraph())
+    let policy = Graph.Policy state
+    let plan = Graph.Plan policy
     0
