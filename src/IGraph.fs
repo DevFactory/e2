@@ -9,12 +9,15 @@ type IEdge<'V, 'Tag> =
     abstract tag: 'Tag
 
 type IGraph<'V, 'Tag> = 
+    inherit ICloneable
     abstract Vertices: IEnumerable<'V>
     abstract Edges: IEnumerable<IEdge<'V, 'Tag>>
     
     abstract AddVertex: 'V -> bool
     abstract AddEdge: IEdge<'V, 'Tag> -> bool
     
+    abstract GetEdges: 'V -> 'V -> IEnumerable<IEdge<'V, 'Tag>>
+
     abstract InEdges: 'V -> IEnumerable<IEdge<'V, 'Tag>>
     abstract OutEdges: 'V -> IEnumerable<IEdge<'V, 'Tag>>
 
@@ -42,7 +45,7 @@ type IPolicy =
 
 type IPlan = 
     inherit IGraph<IPlanVertex, IPlanEdgeTag>
-    abstract member instance_table: IDictionary<IPolicyVertex, IList<IPlanVertex>>
+    abstract FindInstanceFromPolicy: IPolicyVertex -> IList<IPlanVertex>
 
 type IVisualize = 
     abstract Visualize: unit -> string
