@@ -47,5 +47,15 @@ type IPlan =
     inherit IGraph<IPlanVertex, IPlanEdgeTag>
     abstract FindInstanceFromPolicy: IPolicyVertex -> IList<IPlanVertex>
 
-type IVisualize = 
+type IPlanUpdate = 
+    inherit IPlan
+    
+    abstract NewVertices: IEnumerable<IPlanVertex>
+    abstract NewEdges: IEnumerable<IEdge<IPlanVertex, IPlanEdgeTag>>
+    abstract RemovedVertices: IEnumerable<IPlanVertex>
+    abstract RemovedEdges: IEnumerable<IEdge<IPlanVertex, IPlanEdgeTag>>
+
+    abstract Commit: unit -> IPlan
+
+type IVisualizable = 
     abstract Visualize: unit -> string

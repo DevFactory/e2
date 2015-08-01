@@ -34,4 +34,8 @@ let main args =
     policy.LoadPolicyState(state)
     let plan = Plan()
     plan.FromPolicyGraph(policy)
+
+    printfn "%s" ((policy :> IVisualizable).Visualize())
+    printfn "%s" ((plan :> IVisualizable).Visualize())
+
     0

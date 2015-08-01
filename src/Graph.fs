@@ -83,6 +83,18 @@ type Policy() =
             let p' = new Policy()
             p'.graph <- this.graph.Clone()
             p' :> obj
+
+    interface IVisualizable with
+        member this.Visualize() = 
+            let graphviz = new GraphvizAlgorithm<IPolicyVertex, TaggedEdge<IPolicyVertex, IPolicyEdgeTag>>(this.graph)
+            let OnFormatVertex(e: FormatVertexEventArgs<IPolicyVertex>) = 
+                e.VertexFormatter.Label <- e.Vertex.Name
+            let OnFormatEdge(e: FormatEdgeEventArgs<IPolicyVertex, TaggedEdge<IPolicyVertex, IPolicyEdgeTag>>) = 
+                let tag = e.Edge.Tag
+                e.EdgeFormatter.Label.Value <- string tag.Filter
+            graphviz.FormatVertex.Add(OnFormatVertex)
+            graphviz.FormatEdge.Add(OnFormatEdge)
+            graphviz.Generate(new FileDotEngine(), "")
         
 type Plan() =
     let mutable i = new Dictionary<IPolicyVertex, IList<IPlanVertex>>()
@@ -130,7 +142,7 @@ type Plan() =
             p'.instances <- new Dictionary<IPolicyVertex, IList<IPlanVertex>>(this.instances)
             p' :> obj
 
-    interface IVisualize with
+    interface IVisualizable with
         member this.Visualize() = 
             let graphviz = new GraphvizAlgorithm<IPlanVertex, TaggedEdge<IPlanVertex, IPlanEdgeTag>>(g)
             let OnFormatVertex(e: FormatVertexEventArgs<IPlanVertex>) = 
