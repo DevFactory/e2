@@ -1,2 +1,2 @@
-﻿module E2.Planner
+﻿namespace E2
 

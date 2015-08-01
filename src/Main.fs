@@ -30,6 +30,8 @@ TC {
 [<EntryPoint>]
 let main args = 
     let state = Parser.Parse example
-    let policy = Graph.Policy state
-    let plan = Graph.Plan policy
+    let policy = Policy() 
+    policy.LoadPolicyState(state)
+    let plan = Plan()
+    plan.FromPolicyGraph(policy)
     0

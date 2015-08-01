@@ -1,8 +1,7 @@
-﻿module E2.ResourceManager
+﻿namespace E2
 
 open System
 open System.Collections.Generic
-open Graph
 
 //type Host(id: int, cores: float) = 
 //    member val id = id

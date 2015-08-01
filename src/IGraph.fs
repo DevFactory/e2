@@ -1,12 +1,12 @@
-﻿module E2.IGraph
+﻿namespace E2
 
 open System
 open System.Collections.Generic
 
 type IEdge<'V, 'Tag> = 
-    abstract source: 'V
-    abstract target: 'V
-    abstract tag: 'Tag
+    abstract Source: 'V
+    abstract Target: 'V
+    abstract Tag: 'Tag
 
 type IGraph<'V, 'Tag> = 
     inherit ICloneable
@@ -22,23 +22,23 @@ type IGraph<'V, 'Tag> =
     abstract OutEdges: 'V -> IEnumerable<IEdge<'V, 'Tag>>
 
 type IPolicyVertex = 
-    abstract name: string
-    abstract t: string
-    abstract unit_core: float
+    abstract Name: string
+    abstract Type: string
+    abstract UnitCore: float
 
 type IPolicyEdgeTag = 
-    abstract filter: string
-    abstract attribute: string
-    abstract pipelet_id: int
+    abstract Filter: string
+    abstract Attribute: string
+    abstract PipeletId: int
 
 type IPlanVertex = 
-    abstract id: Guid
-    abstract parent: IPolicyVertex
+    abstract Id: Guid
+    abstract Parent: IPolicyVertex
 
 type IPlanEdgeTag = 
-    abstract id: Guid
-    abstract parent: IPolicyEdgeTag
-    abstract load: float
+    abstract Id: Guid
+    abstract Parent: IPolicyEdgeTag
+    abstract Load: float
 
 type IPolicy = 
     inherit IGraph<IPolicyVertex, IPolicyEdgeTag>

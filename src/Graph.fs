@@ -1,4 +1,4 @@
-﻿module E2.Graph
+﻿namespace E2
 
 open QuickGraph
 open QuickGraph.Graphviz
@@ -8,8 +8,6 @@ open QuickGraph.Algorithms
 open System
 open System.Collections.Generic
 
-open IGraph
-
 type FileDotEngine() = 
     interface IDotEngine with
         member this.Run(imageType: Dot.GraphvizImageType, dot: string, outputFileName: string) = 
@@ -17,107 +15,129 @@ type FileDotEngine() =
 
 type Edge<'V, 'Tag>(source: 'V, target: 'V, tag: 'Tag) = 
     interface IEdge<'V, 'Tag> with
-        member this.tag = tag
-        member this.source = source
-        member this.target = target
+        member this.Tag = tag
+        member this.Source = source
+        member this.Target = target
 
 type PolicyVertex(name: string, t: string) = 
     interface IPolicyVertex with
-        member val name = name
-        member val t = t
-        member val unit_core = 
+        member val Name = name
+        member val Type = t
+        member val UnitCore = 
             match t with
             | _ -> 1.0
 
 type PlanVertex(parent: IPolicyVertex) = 
     interface IPlanVertex with
-        member val id = Guid.NewGuid()
-        member val parent = parent
+        member val Id = Guid.NewGuid()
+        member val Parent = parent
 
 type PolicyEdgeTag(filter: string, attr: string, pipelet: int) = 
     interface IPolicyEdgeTag with
-        member val filter = filter 
-        member val attribute = attr 
-        member val pipelet_id = pipelet
+        member val Filter = filter 
+        member val Attribute = attr 
+        member val PipeletId = pipelet
 
 type PlanEdgeTag(parent: IPolicyEdgeTag) =
     interface IPlanEdgeTag with
-        member val id = Guid.NewGuid()
-        member val parent = parent
-        member val load = 1.0 
+        member val Id = Guid.NewGuid()
+        member val Parent = parent
+        member val Load = 1.0 
 
-type Policy(state: Parser.ParseState) =
-    let g = 
-        let g = new BidirectionalGraph<IPolicyVertex, TaggedEdge<IPolicyVertex, IPolicyEdgeTag>>()
-        let nfs = state.V |> Map.toList |> List.map (fun (key, value) -> 
-            new PolicyVertex(key, value))
-        nfs |> List.fold (fun result nf -> result && g.AddVertex(nf)) true
-            |> ignore
-        state.E |> List.mapi (fun i lst ->
-            let add_edge result (v1, v2, e1, e2) =
-                let tag = new PolicyEdgeTag(e1, e2, i)
-                let vertex1 = g.Vertices |> Seq.filter (fun v -> v.name = v1) |> Seq.head
-                let vertex2 = g.Vertices |> Seq.filter (fun v -> v.name = v2) |> Seq.head
-                let edge = new TaggedEdge<IPolicyVertex, IPolicyEdgeTag>(vertex1, vertex2, tag)
-                result && g.AddEdge(edge)
-            List.fold add_edge true lst) 
-                |> List.fold (fun result r -> result && r) true
-                |> ignore
-        g
-    
+type Policy() =
+    let mutable g = new BidirectionalGraph<IPolicyVertex, TaggedEdge<IPolicyVertex, IPolicyEdgeTag>>()
     let TransformEdge (e: TaggedEdge<IPolicyVertex, IPolicyEdgeTag>) =
         new Edge<IPolicyVertex, IPolicyEdgeTag>(e.Source, e.Target, e.Tag) :> IEdge<IPolicyVertex, IPolicyEdgeTag>
 
+    member private this.graph 
+        with get () = g
+        and set (value) = g <- value
+
+    member this.LoadPolicyState (state: Parser.ParseState) = 
+        let nfs = state.V |> Map.toList |> List.map (fun (key, value) -> 
+            new PolicyVertex(key, value))
+        nfs |> List.fold (fun result nf -> result && this.graph.AddVertex(nf)) true
+            |> ignore
+        state.E |> List.mapi (fun i lst ->
+            let AddEdge result (v1, v2, e1, e2) =
+                let tag = new PolicyEdgeTag(e1, e2, i)
+                let vertex1 = this.graph.Vertices |> Seq.filter (fun v -> v.Name = v1) |> Seq.head
+                let vertex2 = this.graph.Vertices |> Seq.filter (fun v -> v.Name = v2) |> Seq.head
+                let edge = new TaggedEdge<IPolicyVertex, IPolicyEdgeTag>(vertex1, vertex2, tag)
+                result && this.graph.AddEdge(edge)
+            List.fold AddEdge true lst) 
+                |> List.fold (fun result r -> result && r) true
+                |> ignore
+
     interface IPolicy with
-        member this.Vertices = g.Vertices
-        member this.Edges = g.Edges |> Seq.map TransformEdge
-        member this.AddVertex(v) = g.AddVertex(v)
-        member this.AddEdge(e) = g.AddEdge(new TaggedEdge<IPolicyVertex, IPolicyEdgeTag>(e.source, e.target, e.tag))
-        member this.InEdges(v) = g.InEdges(v) |> Seq.map TransformEdge
-        member this.OutEdges(v) = g.OutEdges(v) |> Seq.map TransformEdge
+        member this.Vertices = this.graph.Vertices
+        member this.Edges = this.graph.Edges |> Seq.map TransformEdge
+        member this.AddVertex v = this.graph.AddVertex(v)
+        member this.AddEdge e = this.graph.AddEdge(new TaggedEdge<IPolicyVertex, IPolicyEdgeTag>(e.Source, e.Target, e.Tag))
+        member this.InEdges v = this.graph.InEdges(v) |> Seq.map TransformEdge
+        member this.OutEdges v = this.graph.OutEdges(v) |> Seq.map TransformEdge
+        member this.GetEdges v1 v2 = 
+            this.graph.OutEdges(v1) |> Seq.filter (fun v -> v.Target = v2)
+                                    |> Seq.map TransformEdge
+        member this.Clone() = 
+            let p' = new Policy()
+            p'.graph <- this.graph.Clone()
+            p' :> obj
         
-type Plan(policy: IPolicy) =
-    let instances = new Dictionary<IPolicyVertex, IList<IPlanVertex>>()
-    let g = 
-        let g = new BidirectionalGraph<IPlanVertex, TaggedEdge<IPlanVertex, IPlanEdgeTag>>()
-        
+type Plan() =
+    let mutable i = new Dictionary<IPolicyVertex, IList<IPlanVertex>>()
+    let mutable g = new BidirectionalGraph<IPlanVertex, TaggedEdge<IPlanVertex, IPlanEdgeTag>>()
+    let TransformEdge (e: TaggedEdge<IPlanVertex, IPlanEdgeTag>) =
+        new Edge<IPlanVertex, IPlanEdgeTag>(e.Source, e.Target, e.Tag) :> IEdge<IPlanVertex, IPlanEdgeTag> 
+
+    member private this.instances
+        with get () = i
+        and set (value) = i <- value
+
+    member private this.graph 
+        with get () = g
+        and set (value) = g <- value
+
+    member this.FromPolicyGraph (policy: IPolicy) = 
         policy.Vertices |> Seq.fold (fun r v ->
             let v' = new PlanVertex(v)
             let lst = new List<IPlanVertex>([v' :> IPlanVertex])
-            instances.Add(v, lst)
-            r && g.AddVertex(v')) true
+            this.instances.Add(v, lst)
+            r && this.graph.AddVertex(v')) true
                         |> ignore
-        
         policy.Edges |> Seq.fold (fun r e ->
-            let v1 = instances.[e.source].[0]
-            let v2 = instances.[e.target].[0]
-            let tag = new PlanEdgeTag(e.tag)
+            let v1 = this.instances.[e.Source].[0]
+            let v2 = this.instances.[e.Target].[0]
+            let tag = new PlanEdgeTag(e.Tag)
             let e' = new TaggedEdge<IPlanVertex, IPlanEdgeTag>(v1, v2, tag)
-            r && g.AddEdge(e')) true
-                    |> ignore
-
-        g
-
-    let TransformEdge (e: TaggedEdge<IPlanVertex, IPlanEdgeTag>) =
-        new Edge<IPlanVertex, IPlanEdgeTag>(e.Source, e.Target, e.Tag) :> IEdge<IPlanVertex, IPlanEdgeTag>
+            r && this.graph.AddEdge(e')) true
+                     |> ignore
 
     interface IPlan with
-        member this.Vertices = g.Vertices
-        member this.Edges = g.Edges |> Seq.map TransformEdge
-        member this.AddVertex(v) = g.AddVertex(v)
-        member this.AddEdge(e) = g.AddEdge(new TaggedEdge<IPlanVertex, IPlanEdgeTag>(e.source, e.target, e.tag))
-        member this.InEdges(v) = g.InEdges(v) |> Seq.map TransformEdge
-        member this.OutEdges(v) = g.OutEdges(v) |> Seq.map TransformEdge
-        member this.instance_table = instances :> IDictionary<IPolicyVertex, IList<IPlanVertex>>
+        member this.Vertices = this.graph.Vertices
+        member this.Edges = this.graph.Edges |> Seq.map TransformEdge
+        member this.AddVertex v = this.graph.AddVertex(v)
+        member this.AddEdge e = this.graph.AddEdge(new TaggedEdge<IPlanVertex, IPlanEdgeTag>(e.Source, e.Target, e.Tag))
+        member this.InEdges v = this.graph.InEdges(v) |> Seq.map TransformEdge
+        member this.OutEdges v = this.graph.OutEdges(v) |> Seq.map TransformEdge
+        member this.GetEdges v1 v2 = 
+            this.graph.OutEdges(v1) |> Seq.filter (fun v -> v.Target = v2) 
+                                    |> Seq.map TransformEdge
+        member this.FindInstanceFromPolicy(pv) = this.instances.[pv]
+        member this.Clone() = 
+            let p' = new Plan()
+            p'.graph <- this.graph.Clone()
+            p'.instances <- new Dictionary<IPolicyVertex, IList<IPlanVertex>>(this.instances)
+            p' :> obj
 
     interface IVisualize with
         member this.Visualize() = 
             let graphviz = new GraphvizAlgorithm<IPlanVertex, TaggedEdge<IPlanVertex, IPlanEdgeTag>>(g)
             let OnFormatVertex(e: FormatVertexEventArgs<IPlanVertex>) = 
-                e.VertexFormatter.Label <- e.Vertex.parent.name + " " + e.Vertex.id.ToString()
+                e.VertexFormatter.Label <- e.Vertex.Parent.Name + " " + e.Vertex.Id.ToString()
             let OnFormatEdge(e: FormatEdgeEventArgs<IPlanVertex, TaggedEdge<IPlanVertex, IPlanEdgeTag>>) = 
-                let tag = e.Edge.Tag.parent
-                e.EdgeFormatter.Label.Value <- string tag.pipelet_id + ": " + tag.filter
+                let tag = e.Edge.Tag.Parent
+                e.EdgeFormatter.Label.Value <- string tag.PipeletId + ": " + tag.Filter
             graphviz.FormatVertex.Add(OnFormatVertex)
             graphviz.FormatEdge.Add(OnFormatEdge)
             graphviz.Generate(new FileDotEngine(), "")
