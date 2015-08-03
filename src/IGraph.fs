@@ -8,6 +8,17 @@ type IEdge<'V, 'Tag> =
     abstract Target: 'V
     abstract Tag: 'Tag
 
+type IUndirectedGraph<'V, 'Tag> = 
+    abstract Vertices: IEnumerable<'V>
+    abstract Edges: IEnumerable<IEdge<'V, 'Tag>>
+    
+    abstract AddVertex: 'V -> bool
+    abstract AddEdge: IEdge<'V, 'Tag> -> bool
+    
+    abstract GetEdges: 'V -> 'V -> IEnumerable<IEdge<'V, 'Tag>>
+
+    abstract AdjacentEdges: 'V -> IEnumerable<IEdge<'V, 'Tag>>
+
 type IGraph<'V, 'Tag> = 
     abstract Vertices: IEnumerable<'V>
     abstract Edges: IEnumerable<IEdge<'V, 'Tag>>
