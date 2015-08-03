@@ -58,11 +58,14 @@
   </Choose>
   <ItemGroup>
     <Compile Include="src\IGraph.fs" />
+    <Compile Include="src\Visualize.fs" />
     <Compile Include="src/Ast.fs" />
     <Compile Include="src/Parser.fs" />
     <Compile Include="src\Graph.fs" />
     <Compile Include="src\ResourceManager.fs" />
     <Compile Include="src\Planner.fs" />
+    <Compile Include="src\Policy.fs" />
+    <Compile Include="src\Plan.fs" />
     <Compile Include="src/Main.fs" />
     <Content Include="packages.config" />
   </ItemGroup>
