@@ -15,9 +15,10 @@ type Placement() =
         let fg = new FlatGraph(plan)
         let g = fg :> E2.IUndirectedGraph<IPlanVertex, IPlanEdgeTag>
                 
+        // I like immutable too, but...
         let mutable serverIndex = 0
         let mutable usedCores = 0.0
-        let mutable dict = Dictionary<IPlanVertex, IServer>()
+        let dict = Dictionary<IPlanVertex, IServer>()
         
         let colors = new Dictionary<IPlanVertex, GraphColor>()
         let pending = new Queue<IPlanVertex>()
@@ -56,8 +57,64 @@ type Placement() =
                     colors.[v] <- GraphColor.Gray
                     pending.Enqueue(v)
 
-        dict
+        dict :> IDictionary<IPlanVertex, IServer>
+
+    member private this.PlaceHeuristic (plan: IPlan) (servers: IList<IServer>) = 
+        let dict = this.PlaceBreadthFirst plan servers
+        let fg = new FlatGraph(plan)
+        let g = fg :> E2.IUndirectedGraph<IPlanVertex, IPlanEdgeTag>
+
+        let rec Iteration n = 
+            let pairs = seq {for v1 in g.Vertices do for v2 in g.Vertices do yield v1, v2}
+            
+            let IsInDifferentPartitions (v1, v2) = (dict.[v1] <> dict.[v2])
+            
+            let SwapGain (v1, v2) =
+                let IsExternalEdge (v: IPlanVertex) (e: IEdge<IPlanVertex, IPlanEdgeTag>) =
+                    let v' = if e.Source = v then e.Target else e.Source
+                    IsInDifferentPartitions(v, v')
+
+                let IsInternalEdge (v: IPlanVertex) (e: IEdge<IPlanVertex, IPlanEdgeTag>) =
+                    not (IsExternalEdge v e)
+
+                let ExternalCost v = 
+                    v |> g.AdjacentEdges
+                      |> Seq.filter (IsExternalEdge v)
+                      |> Seq.fold (fun acc e -> acc + e.Tag.Load) 0.0
+                
+                let InternalCost v = 
+                    v |> g.AdjacentEdges
+                      |> Seq.filter (IsInternalEdge v)
+                      |> Seq.fold (fun acc e -> acc + e.Tag.Load) 0.0
+
+                let reduction_v1 = ExternalCost v1 - InternalCost v1
+                let reduction_v2 = ExternalCost v2 - InternalCost v2
+                let cost = g.GetEdges v1 v2 |> Seq.fold (fun acc e -> acc + e.Tag.Load) 0.0
+
+                reduction_v1 + reduction_v2 - 2.0 * cost
+
+            let MaxGain (v1, v2) (v1', v2') = 
+                let gain1 = SwapGain (v1, v2)
+                let gain2 = SwapGain (v1', v2')
+                if gain1 <= gain2 then (v1, v2) else (v1', v2')
+
+            let SwapBestPair ps =
+                if Seq.isEmpty ps then ()
+                else 
+                    let (v1, v2) = ps |> Seq.reduce MaxGain
+                    let temp = dict.[v1]
+                    dict.[v1] <- dict.[v2]
+                    dict.[v2] <- temp
+
+            match n with
+            | 0 -> ()
+            | _ -> pairs |> Seq.filter IsInDifferentPartitions
+                         |> Seq.filter (fun p -> (SwapGain p) > 0.0)
+                         |> SwapBestPair; Iteration (n-1)
+                
+        Iteration 10
+        dict 
         
     interface IPlacement with
         member this.Place (plan: IPlan) (servers: IList<IServer>) = 
-            this.PlaceRandom plan servers
+            this.PlaceHeuristic plan servers

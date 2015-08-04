@@ -1,6 +1,7 @@
 module E2.Main
 
 open System
+open System.Collections.Generic
 
 let example = """
 Proxy proxy;
@@ -27,6 +28,10 @@ TC {
 }
 """
 
+type Server(cores: int) = 
+    interface IServer with
+        member this.AvailableCores = 10.0
+
 [<EntryPoint>]
 let main args = 
     let state = Parser.Parse example
@@ -37,5 +42,13 @@ let main args =
 
     printfn "%s" ((policy :> IVisualizable).Visualize())
     printfn "%s" ((plan :> IVisualizable).Visualize())
+
+    let placement = Placement() :> IPlacement
+    let servers = new List<IServer>()
+    servers.Add(new Server(16))
+
+    let dict = placement.Place plan servers
+    for entry in dict do 
+        printfn "nf: %A, server: %A" entry.Key.Id entry.Value
 
     0
