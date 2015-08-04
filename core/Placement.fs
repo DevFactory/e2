@@ -67,28 +67,29 @@ type Placement() =
         let rec Iteration n = 
             let pairs = seq {for v1 in g.Vertices do for v2 in g.Vertices do yield v1, v2}
             
-            let IsInDifferentPartitions (v1, v2) = (dict.[v1] <> dict.[v2])
+            let IsInSamePartitions (v1, v2) = (dict.[v1] = dict.[v2])
             
+            // Assumption: v1 and v2 are not in the same partition
             let SwapGain (v1, v2) =
-                let IsExternalEdge (v: IPlanVertex) (e: IEdge<IPlanVertex, IPlanEdgeTag>) =
-                    let v' = if e.Source = v then e.Target else e.Source
-                    IsInDifferentPartitions(v, v')
+                let IsInternalEdge (e: IEdge<IPlanVertex, IPlanEdgeTag>) =
+                    IsInSamePartitions(e.Source, e.Target)
 
-                let IsInternalEdge (v: IPlanVertex) (e: IEdge<IPlanVertex, IPlanEdgeTag>) =
-                    not (IsExternalEdge v e)
+                let IsExternalEdge (v1: IPlanVertex) (v2: IPlanVertex) (e: IEdge<IPlanVertex, IPlanEdgeTag>) =
+                    let v' = if e.Source = v1 then e.Target else e.Source
+                    not (IsInSamePartitions(v1, v')) && IsInSamePartitions(v2, v')
 
-                let ExternalCost v = 
-                    v |> g.AdjacentEdges
-                      |> Seq.filter (IsExternalEdge v)
-                      |> Seq.fold (fun acc e -> acc + e.Tag.Load) 0.0
+                let ExternalCost v1 v2 = 
+                    v1 |> g.AdjacentEdges
+                       |> Seq.filter (IsExternalEdge v1 v2)
+                       |> Seq.fold (fun acc e -> acc + e.Tag.Load) 0.0
                 
                 let InternalCost v = 
                     v |> g.AdjacentEdges
-                      |> Seq.filter (IsInternalEdge v)
+                      |> Seq.filter IsInternalEdge
                       |> Seq.fold (fun acc e -> acc + e.Tag.Load) 0.0
 
-                let reduction_v1 = ExternalCost v1 - InternalCost v1
-                let reduction_v2 = ExternalCost v2 - InternalCost v2
+                let reduction_v1 = ExternalCost v1 v2 - InternalCost v1
+                let reduction_v2 = ExternalCost v2 v1 - InternalCost v2
                 let cost = g.GetEdges v1 v2 |> Seq.fold (fun acc e -> acc + e.Tag.Load) 0.0
 
                 reduction_v1 + reduction_v2 - 2.0 * cost
@@ -108,7 +109,7 @@ type Placement() =
 
             match n with
             | 0 -> ()
-            | _ -> pairs |> Seq.filter IsInDifferentPartitions
+            | _ -> pairs |> Seq.filter (IsInSamePartitions >> not)
                          |> Seq.filter (fun p -> (SwapGain p) > 0.0)
                          |> SwapBestPair; Iteration (n-1)
                 
