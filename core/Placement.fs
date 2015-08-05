@@ -1,5 +1,6 @@
 ﻿namespace E2
 
+open System.Linq
 open System.Collections.Generic
 open QuickGraph
 
@@ -43,8 +44,8 @@ type Placement() =
 
             // Place current NF
             if serverIndex >= servers.Count then failwith "Not enough servers for placement."
-            if current.Parent.UnitCore <= servers.[serverIndex].AvailableCores - usedCores then
-                usedCores <- usedCores + current.Parent.UnitCore
+            if 1.0 <= servers.[serverIndex].AvailableCores - usedCores then
+                usedCores <- usedCores + 1.0
                 dict.Add(current, servers.[serverIndex])
             else
                 usedCores <- 0.0
@@ -120,5 +121,32 @@ type Placement() =
         dict 
         
     interface IPlacement with
-        member this.Place (plan: IPlan) (servers: IList<IServer>) = 
+        member this.Initial (plan: IPlan) (servers: IList<IServer>) = 
             this.PlaceHeuristic plan servers
+
+        member this.Incremental (plan: IPlan) (servers: IList<IServer>) (placement: IDictionary<IPlanVertex, IServer>) = 
+            let dict = new Dictionary<IPlanVertex, IServer>(placement)
+
+            let PlaceVertex (v: IPlanVertex) = 
+                assert (not v.IsPlaced)
+
+                let Cost s = 
+                    let e1 = plan.InEdges v |> Seq.filter (fun e -> dict.[e.Source] <> s)
+                    let e2 = plan.OutEdges v |> Seq.filter (fun e -> dict.[e.Target] <> s)
+                    let edges = e1.Union(e2)
+
+                    edges |> Seq.map (fun e -> e.Tag.Load)
+                          |> Seq.sum
+
+                let candidates = servers |> Seq.filter (fun s -> s.AvailableCores >= 1.0)
+
+                if Seq.isEmpty candidates then failwith "Not enough servers for placement."
+                else
+                    let choice = candidates |> Seq.reduce (fun s1 s2 -> if Cost s1 > Cost s2 then s2 else s1)
+                    dict.Add(v, choice)
+
+
+            plan.Vertices |> Seq.filter (fun v -> (not v.IsPlaced))
+                          |> Seq.iter PlaceVertex
+
+            dict :> IDictionary<IPlanVertex, IServer>

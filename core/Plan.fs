@@ -23,6 +23,7 @@ type PlanEdgeTag(parent: IPolicyEdgeTag) =
         
 type Plan() =
     let mutable i = new Dictionary<IPolicyVertex, IList<IPlanVertex>>()
+    let mutable e = new Dictionary<IPolicyEdgeTag, IList<IPlanEdgeTag>>()
     let mutable g = new BidirectionalGraph<IPlanVertex, TaggedEdge<IPlanVertex, IPlanEdgeTag>>()
     let TransformEdge (e: TaggedEdge<IPlanVertex, IPlanEdgeTag>) =
         new E2.Edge<IPlanVertex, IPlanEdgeTag>(e.Source, e.Target, e.Tag) :> IEdge<IPlanVertex, IPlanEdgeTag> 
@@ -30,6 +31,10 @@ type Plan() =
     member internal this.instances
         with get () = i
         and set (value) = i <- value
+
+    member internal this.edges
+        with get () = e
+        and set (value) = e <- value
 
     member internal this.graph 
         with get () = g
@@ -42,11 +47,14 @@ type Plan() =
             this.instances.Add(v, lst)
             r && this.graph.AddVertex(v')) true
                         |> ignore
+
         policy.Edges |> Seq.fold (fun r e ->
             let v1 = this.instances.[e.Source].[0]
             let v2 = this.instances.[e.Target].[0]
             let tag = new PlanEdgeTag(e.Tag)
             let e' = new TaggedEdge<IPlanVertex, IPlanEdgeTag>(v1, v2, tag)
+            let lst = new List<IPlanEdgeTag>([tag :> IPlanEdgeTag])
+            this.edges.Add(e.Tag, lst)
             r && this.graph.AddEdge(e')) true
                      |> ignore
 
@@ -59,6 +67,7 @@ type Plan() =
             this.graph.AddVertex(v)
 
         member this.AddEdge e = 
+            this.edges.[e.Tag.Parent].Add(e.Tag)
             this.graph.AddEdge(new TaggedEdge<IPlanVertex, IPlanEdgeTag>(e.Source, e.Target, e.Tag))
 
         member this.RemoveVertex v = 
@@ -72,7 +81,8 @@ type Plan() =
             this.graph.OutEdges(v1) |> Seq.filter (fun v -> v.Target = v2) 
                                     |> Seq.map TransformEdge
         
-        member this.FindInstanceFromPolicy pv = this.instances.[pv]
+        member this.FindPlanVertices pv = this.instances.[pv]
+        member this.FindPlanEdgeTags pe = this.edges.[pe]
 
         member this.Visualize() = 
             let graphviz = new GraphvizAlgorithm<IPlanVertex, TaggedEdge<IPlanVertex, IPlanEdgeTag>>(g)

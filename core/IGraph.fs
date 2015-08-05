@@ -40,7 +40,7 @@ type IGraph<'V, 'Tag> =
 type IPolicyVertex = 
     abstract Name: string
     abstract Type: string
-    abstract UnitCore: float
+    abstract UnitCore: float // cores per load
 
 type IPolicyEdgeTag = 
     abstract Filter: string
@@ -62,7 +62,8 @@ type IPolicy =
 
 type IPlan = 
     inherit IGraph<IPlanVertex, IPlanEdgeTag>
-    abstract FindInstanceFromPolicy: IPolicyVertex -> IList<IPlanVertex>
+    abstract FindPlanVertices: IPolicyVertex -> IList<IPlanVertex>
+    abstract FindPlanEdgeTags: IPolicyEdgeTag -> IList<IPlanEdgeTag>
 
 type IPlanUpdate = 
     inherit IPlan
