@@ -37,18 +37,13 @@ let main args =
     let state = Parser.Parse example
     let policy = Policy() 
     policy.LoadPolicyState(state)
-    let plan = Plan()
-    plan.FromPolicyGraph(policy)
 
-    printfn "%s" ((policy :> IVisualizable).Visualize())
+    let planner = Planner() :> IPlanner
+
+    let plan = planner.InitialPlan(policy)
     printfn "%s" ((plan :> IVisualizable).Visualize())
 
-    let placement = Placement() :> IPlacement
-    let servers = new List<IServer>()
-    servers.Add(new Server(16))
-
-    let dict = placement.Place plan servers
-    for entry in dict do 
-        printfn "nf: %A, server: %A" entry.Key.Id entry.Value
+    planner.Scale policy plan
+    printfn "%s" ((plan :> IVisualizable).Visualize())
 
     0

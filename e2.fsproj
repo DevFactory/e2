@@ -65,9 +65,9 @@
     <Compile Include="core/Parser.fs" />
     <Compile Include="core/Graph.fs" />
     <Compile Include="core/ResourceManager.fs" />
+    <Compile Include="core/Plan.fs" />
     <Compile Include="core/Planner.fs" />
     <Compile Include="core/Policy.fs" />
-    <Compile Include="core/Plan.fs" />
     <Compile Include="core/Placement.fs" />
     <Compile Include="core/Main.fs" />
     <Content Include="packages.config" />

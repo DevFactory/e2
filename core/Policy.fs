@@ -21,6 +21,7 @@ type PolicyEdgeTag(filter: string, attr: string, pipelet: int) =
 
 type Policy() =
     let mutable g = new BidirectionalGraph<IPolicyVertex, TaggedEdge<IPolicyVertex, IPolicyEdgeTag>>()
+    
     let TransformEdge (e: TaggedEdge<IPolicyVertex, IPolicyEdgeTag>) =
         new E2.Edge<IPolicyVertex, IPolicyEdgeTag>(e.Source, e.Target, e.Tag) :> IEdge<IPolicyVertex, IPolicyEdgeTag>
 
@@ -49,17 +50,13 @@ type Policy() =
         member this.Edges = this.graph.Edges |> Seq.map TransformEdge
         member this.AddVertex v = this.graph.AddVertex(v)
         member this.AddEdge e = this.graph.AddEdge(new TaggedEdge<IPolicyVertex, IPolicyEdgeTag>(e.Source, e.Target, e.Tag))
+        member this.RemoveVertex v = this.graph.RemoveVertex(v)
         member this.InEdges v = this.graph.InEdges(v) |> Seq.map TransformEdge
         member this.OutEdges v = this.graph.OutEdges(v) |> Seq.map TransformEdge
         member this.GetEdges v1 v2 = 
             this.graph.OutEdges(v1) |> Seq.filter (fun v -> v.Target = v2)
                                     |> Seq.map TransformEdge
-        member this.Clone() = 
-            let p' = new Policy()
-            p'.graph <- this.graph.Clone()
-            p' :> obj
 
-    interface IVisualizable with
         member this.Visualize() = 
             let graphviz = new GraphvizAlgorithm<IPolicyVertex, TaggedEdge<IPolicyVertex, IPolicyEdgeTag>>(this.graph)
             let OnFormatVertex(e: FormatVertexEventArgs<IPolicyVertex>) = 

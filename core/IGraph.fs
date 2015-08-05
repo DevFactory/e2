@@ -19,12 +19,18 @@ type IUndirectedGraph<'V, 'Tag> =
 
     abstract AdjacentEdges: 'V -> IEnumerable<IEdge<'V, 'Tag>>
 
+type IVisualizable = 
+    abstract Visualize: unit -> string
+
 type IGraph<'V, 'Tag> = 
+    inherit IVisualizable
     abstract Vertices: IEnumerable<'V>
     abstract Edges: IEnumerable<IEdge<'V, 'Tag>>
     
     abstract AddVertex: 'V -> bool
     abstract AddEdge: IEdge<'V, 'Tag> -> bool
+
+    abstract RemoveVertex: 'V -> bool
     
     abstract GetEdges: 'V -> 'V -> IEnumerable<IEdge<'V, 'Tag>>
 
@@ -44,18 +50,17 @@ type IPolicyEdgeTag =
 type IPlanVertex = 
     abstract Id: Guid
     abstract Parent: IPolicyVertex
+    abstract IsPlaced: bool with get, set
 
 type IPlanEdgeTag = 
     abstract Id: Guid
     abstract Parent: IPolicyEdgeTag
-    abstract Load: float
+    abstract Load: float with get, set
 
 type IPolicy = 
-    inherit ICloneable
     inherit IGraph<IPolicyVertex, IPolicyEdgeTag>
 
 type IPlan = 
-    inherit ICloneable
     inherit IGraph<IPlanVertex, IPlanEdgeTag>
     abstract FindInstanceFromPolicy: IPolicyVertex -> IList<IPlanVertex>
 
@@ -64,10 +69,7 @@ type IPlanUpdate =
     
     abstract NewVertices: IEnumerable<IPlanVertex>
     abstract NewEdges: IEnumerable<IEdge<IPlanVertex, IPlanEdgeTag>>
+
     abstract RemovedVertices: IEnumerable<IPlanVertex>
-    abstract RemovedEdges: IEnumerable<IEdge<IPlanVertex, IPlanEdgeTag>>
 
-    abstract Commit: unit -> IPlan
-
-type IVisualizable = 
-    abstract Visualize: unit -> string
+    abstract GetPlan: IPlan

@@ -81,16 +81,19 @@ type Placement() =
                 let ExternalCost v1 v2 = 
                     v1 |> g.AdjacentEdges
                        |> Seq.filter (IsExternalEdge v1 v2)
-                       |> Seq.fold (fun acc e -> acc + e.Tag.Load) 0.0
+                       |> Seq.map (fun e -> e.Tag.Load)
+                       |> Seq.sum
                 
                 let InternalCost v = 
                     v |> g.AdjacentEdges
                       |> Seq.filter IsInternalEdge
-                      |> Seq.fold (fun acc e -> acc + e.Tag.Load) 0.0
+                      |> Seq.map (fun e -> e.Tag.Load)
+                      |> Seq.sum
 
                 let reduction_v1 = ExternalCost v1 v2 - InternalCost v1
                 let reduction_v2 = ExternalCost v2 v1 - InternalCost v2
-                let cost = g.GetEdges v1 v2 |> Seq.fold (fun acc e -> acc + e.Tag.Load) 0.0
+                let cost = g.GetEdges v1 v2 |> Seq.map (fun e -> e.Tag.Load)
+                                            |> Seq.sum
 
                 reduction_v1 + reduction_v2 - 2.0 * cost
 
