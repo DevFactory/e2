@@ -30,7 +30,7 @@ type FlatGraph(origin: E2.IGraph<IPlanVertex, IPlanEdgeTag>) =
                 let edges = origin.Edges |> Seq.filter (fun e -> (e.Source = v1 && e.Target = v2) ||
                                                                  (e.Target = v1 && e.Source = v1))
                 if not (Seq.isEmpty edges) then 
-                    let maxWeightEdge = edges |> Seq.reduce (fun a b -> if a.Tag.Load > b.Tag.Load then a else b)
+                    let maxWeightEdge = edges |> Seq.reduce (fun a b -> if a.Tag.Load >= b.Tag.Load then a else b)
                                               |> TransformIEdge
                     g.AddEdge(maxWeightEdge) |> ignore
     

@@ -101,7 +101,7 @@ type Placement() =
             let MaxGain (v1, v2) (v1', v2') = 
                 let gain1 = SwapGain (v1, v2)
                 let gain2 = SwapGain (v1', v2')
-                if gain1 <= gain2 then (v1, v2) else (v1', v2')
+                if gain1 >= gain2 then (v1, v2) else (v1', v2')
 
             let SwapBestPair ps =
                 if Seq.isEmpty ps then ()
@@ -131,8 +131,8 @@ type Placement() =
                 assert (not v.IsPlaced)
 
                 let Cost s = 
-                    let e1 = plan.InEdges v |> Seq.filter (fun e -> dict.[e.Source] <> s)
-                    let e2 = plan.OutEdges v |> Seq.filter (fun e -> dict.[e.Target] <> s)
+                    let e1 = plan.InEdges v |> Seq.filter (fun e -> dict.ContainsKey(e.Source) && dict.[e.Source] <> s)
+                    let e2 = plan.OutEdges v |> Seq.filter (fun e -> dict.ContainsKey(e.Target) && dict.[e.Target] <> s)
                     let edges = e1.Union(e2)
 
                     edges |> Seq.map (fun e -> e.Tag.Load)
@@ -142,7 +142,7 @@ type Placement() =
 
                 if Seq.isEmpty candidates then failwith "Not enough servers for placement."
                 else
-                    let choice = candidates |> Seq.reduce (fun s1 s2 -> if Cost s1 > Cost s2 then s2 else s1)
+                    let choice = candidates |> Seq.reduce (fun s1 s2 -> if Cost s1 <= Cost s2 then s1 else s2)
                     dict.Add(v, choice)
 
 
