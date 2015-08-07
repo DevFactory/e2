@@ -47,6 +47,4 @@ type FlatGraph(origin: E2.IGraph<IPlanVertex, IPlanEdgeTag>) =
             g.AdjacentEdges(v1) |> Seq.filter (fun v -> v.Target = v2 || v.Source = v2) 
                                 |> Seq.map TransformEdge
             
-//    member this.GetInstance(id: Guid) = 
-//        igraph.Vertices |> Seq.filter (fun v -> v.id = id) |> Seq.head
 
