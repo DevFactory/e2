@@ -48,12 +48,12 @@ type IPolicyEdgeTag =
     abstract PipeletId: int
 
 type IPlanVertex = 
-    abstract Id: Guid
+    abstract Id: int
     abstract Parent: IPolicyVertex
     abstract IsPlaced: bool with get, set
 
 type IPlanEdgeTag = 
-    abstract Id: Guid
+    abstract Id: int
     abstract Parent: IPolicyEdgeTag
     abstract Load: float with get, set
 

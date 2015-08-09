@@ -11,13 +11,13 @@ open QuickGraph.Algorithms
 
 type PlanVertex(parent: IPolicyVertex) = 
     interface IPlanVertex with
-        member val Id = Guid.NewGuid()
+        member val Id = Identifier.GetId ()
         member val Parent = parent
         member val IsPlaced = true with get, set
 
 type PlanEdgeTag(parent: IPolicyEdgeTag) =
     interface IPlanEdgeTag with
-        member val Id = Guid.NewGuid()
+        member val Id = Identifier.GetId ()
         member val Parent = parent
         member val Load = 0.0 with get, set
         
