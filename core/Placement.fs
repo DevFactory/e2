@@ -179,29 +179,30 @@ type Placement() =
         Iteration 10
         dict 
 
-        static member Incremental(plan : IPlan, servers : IList<Server>, placement : IDictionary<IPlanVertex, IServer>) = 
-            let dict = new Dictionary<IPlanVertex, Server>(placement)
+    static member Incremental(plan : IPlan, servers : IList<Server>, placement : IDictionary<IPlanVertex, Server>) = 
+        let dict = new Dictionary<IPlanVertex, Server>(placement)
             
-            let PlaceVertex(v : IPlanVertex) = 
-                assert (not v.IsPlaced)
-                let Cost s = 
-                    let e1 = plan.InEdges v |> Seq.filter (fun e -> dict.ContainsKey(e.Source) && dict.[e.Source] <> s)
-                    let e2 = plan.OutEdges v |> Seq.filter (fun e -> dict.ContainsKey(e.Target) && dict.[e.Target] <> s)
-                    let edges = e1.Union(e2)
-                    edges
-                    |> Seq.map (fun e -> e.Tag.Load)
-                    |> Seq.sum
+        let PlaceVertex(v : IPlanVertex) = 
+            assert (not v.IsPlaced)
+            let Cost s = 
+                let e1 = plan.InEdges v |> Seq.filter (fun e -> dict.ContainsKey(e.Source) && dict.[e.Source] <> s)
+                let e2 = plan.OutEdges v |> Seq.filter (fun e -> dict.ContainsKey(e.Target) && dict.[e.Target] <> s)
+                let edges = e1.Union(e2)
+                edges
+                |> Seq.map (fun e -> e.Tag.Load)
+                |> Seq.sum
                 
-                let candidates = servers |> Seq.filter (fun s -> s.AvailableCores >= 1.0)
-                if Seq.isEmpty candidates then failwith "Not enough servers for placement."
-                else 
-                    let choice = 
-                        candidates |> Seq.reduce (fun s1 s2 -> 
-                                          if Cost s1 <= Cost s2 then s1
-                                          else s2)
-                    dict.Add(v, choice)
-            plan.Vertices
-            |> Seq.filter (fun v -> (not v.IsPlaced))
-            |> Seq.iter PlaceVertex
-            dict :> IDictionary<IPlanVertex, IServer>
+            let candidates = servers |> Seq.filter (fun s -> s.AvailableCores >= 1.0)
+            if Seq.isEmpty candidates then failwith "Not enough servers for placement."
+            else 
+                let choice = 
+                    candidates |> Seq.reduce (fun s1 s2 -> 
+                                        if Cost s1 <= Cost s2 then s1
+                                        else s2)
+                dict.Add(v, choice)
+        plan.Vertices
+        |> Seq.filter (fun v -> (not v.IsPlaced))
+        |> Seq.iter PlaceVertex
+        dict :> IDictionary<IPlanVertex, Server>
+
     static member Place (plan : IPlan) (servers : IList<Server>) = Placement.PlaceHeuristic plan servers

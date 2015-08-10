@@ -59,7 +59,7 @@ type Orchestrator(conf : string) =
                 lb.NextModules.Add(server.Switch)
                 // Config LB for all vNFs
                 let nextHopNF = e.Target
-                let nextHopvNFs = this.Plan.FindInstanceFromPolicy nextHopNF
+                let nextHopvNFs = this.Plan.FindPlanVertices nextHopNF
                 for v in nextHopvNFs do
                     let dmac = PhysicalAddress.Parse("06" + v.Id.ToString("D10"))
                     lb.ReplicaDMAC.Add(dmac)
