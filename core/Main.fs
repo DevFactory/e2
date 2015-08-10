@@ -28,22 +28,13 @@ TC {
 }
 """
 
-type Server(cores: int) = 
+type Server(cores : int) = 
     interface IServer with
         member this.AvailableCores = 10.0
 
 [<EntryPoint>]
 let main args = 
-    let state = Parser.Parse example
-    let policy = Policy() 
-    policy.LoadPolicyState(state)
-
-    let planner = Planner() :> IPlanner
-
-    let plan = planner.InitialPlan(policy)
-    printfn "%s" ((plan :> IVisualizable).Visualize())
-
-    planner.Scale policy plan
-    printfn "%s" ((plan :> IVisualizable).Visualize())
-
+    let mgr = Orchestrator example
+    mgr.InitServers()
+    mgr.InitNF()
     0
