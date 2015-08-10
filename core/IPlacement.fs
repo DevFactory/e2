@@ -3,5 +3,6 @@
 open System.Collections.Generic
 
 type IPlacement = 
-    abstract Place: IPlan -> IList<IServer> -> IDictionary<IPlanVertex, IServer>
-
+    abstract Initial : IPlan * IList<IServer> -> IDictionary<IPlanVertex, IServer>
+    abstract Incremental : IPlan * IList<IServer> * IDictionary<IPlanVertex, IServer>
+     -> IDictionary<IPlanVertex, IServer>
