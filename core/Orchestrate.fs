@@ -72,31 +72,31 @@ type Orchestrator(conf : string) =
             // Finally set up L2 table 
             this.ToR.L2.Add(dmac, server)
 
-        member this.ApplyServer (server : Server) = 
-            // Run vNF
-            let idleNF = server.NF |> Seq.filter (fun v -> not v.IsPlaced)
+    member this.ApplyServer (server : Server) = 
+        // Run vNF
+        let idleNF = server.NF |> Seq.filter (fun v -> not v.IsPlaced)
             
-            // TODO: run idleNF on server
+        // TODO: run idleNF on server
             
-            idleNF |> Seq.iter (fun v -> (v.IsPlaced <- true))
+        idleNF |> Seq.iter (fun v -> (v.IsPlaced <- true))
 
-            // TODO: 
-            // 1. flush SoftNIC modules
-            // 2. Setup PPort
-            // 3. Setup E2Switch
-            // 4. Setup VPorts
-            // 5. Setup CL and LBs
+        // TODO: 
+        // 1. flush SoftNIC modules
+        // 2. Setup PPort
+        // 3. Setup E2Switch
+        // 4. Setup VPorts
+        // 5. Setup CL and LBs
 
-        member this.ApplySwitch () = 
-            // TODO: 
-            // Setup L2
-            for entry in this.ToR.L2 do
-                let dmac = entry.Key
-                let server = entry.Value
-                let port = this.ToR.Port.[server]
-                printfn "%A -> %d" dmac port
-            ()
+    member this.ApplySwitch () = 
+        // TODO: 
+        // Setup L2
+        for entry in this.ToR.L2 do
+            let dmac = entry.Key
+            let server = entry.Value
+            let port = this.ToR.Port.[server]
+            printfn "%A -> %d" dmac port
+        ()
 
-        member this.Apply () =
-            this.Servers |> Seq.iter this.ApplyServer
-            this.ApplySwitch ()
+    member this.Apply () =
+        this.Servers |> Seq.iter this.ApplyServer
+        this.ApplySwitch ()
