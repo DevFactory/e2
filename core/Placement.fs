@@ -51,6 +51,10 @@ type Server(totalCores : int, ip : IPAddress) =
     member val Switch = Switch()
     member this.AvailableCores = float (this.TotalCores - this.NF.Count)
 
+type ToRSwitch () = 
+    member val L2 = Dictionary<PhysicalAddress, Server>()
+    member val Port = Dictionary<Server, int>()
+
 type Placement() = 
     
     static member private PlaceRandom (plan : IPlan) (servers : IList<Server>) = 

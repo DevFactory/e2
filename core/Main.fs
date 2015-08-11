@@ -2,6 +2,7 @@ module E2.Main
 
 open System
 open System.Collections.Generic
+open CookComputing.XmlRpc
 
 let example = """
 Proxy proxy;
@@ -28,13 +29,11 @@ TC {
 }
 """
 
-type Server(cores : int) = 
-    interface IServer with
-        member this.AvailableCores = 10.0
-
 [<EntryPoint>]
 let main args = 
-    let mgr = Orchestrator example
-    mgr.InitServers()
-    mgr.InitNF()
+//    let mgr = Orchestrator example
+//    mgr.InitServer()
+//    mgr.Init()
+//    mgr.Apply()
+    let channel = ServerChannel(System.Net.IPAddress.Parse("127.0.0.1"))
     0
