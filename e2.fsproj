@@ -19,6 +19,7 @@
     <Tailcalls>true</Tailcalls>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors />
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
   </PropertyGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '11.0'">
@@ -51,11 +52,12 @@
     <Compile Include="core/Graph.fs" />
     <Compile Include="core/Plan.fs" />
     <Compile Include="core/Planner.fs" />
+    <Compile Include="core\SwitchChannel.fs" />
+    <Compile Include="core\ServerChannel.fs" />
+    <Compile Include="core\Resources.fs" />
     <Compile Include="core/Policy.fs" />
     <Compile Include="core/Placement.fs" />
     <Compile Include="core\Orchestrate.fs" />
-    <Compile Include="core\SwitchChannel.fs" />
-    <Compile Include="core\ServerChannel.fs" />
     <Compile Include="core/Main.fs" />
     <Content Include="packages.config" />
   </ItemGroup>

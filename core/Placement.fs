@@ -6,57 +6,7 @@ open System.Collections.Generic
 open System.Net.NetworkInformation
 open QuickGraph
 
-type Module() = 
-    member val Id = Identifier.GetId()
-    member val NextModules = List<Module>()
-
-type Classifier() = 
-    inherit Module()
-    member val Filters = List<string>()
-
-type LoadBalancer(isLastHop : bool) = 
-    inherit Module()
-    member val IsLastHop = isLastHop
-    member val ReplicaDMAC = List<PhysicalAddress>()
-
-type Switch() = 
-    inherit Module()
-    member val DMAC = List<PhysicalAddress>()
-
-type VPortIn(intf : string) = 
-    inherit Module()
-    member val LocalInterface = intf
-
-type VPortOut(intf : string) = 
-    inherit Module()
-    member val LocalInterface = intf
-
-type PPortIn() = 
-    inherit Module()
-
-type PPortOut() = 
-    inherit Module()
-
-type Server(totalCores : int, ip : IPAddress) = 
-    member val Id = Identifier.GetId()
-    member val TotalCores = totalCores
-    member val IPAddress = ip
-    member val NF = List<IPlanVertex>()
-    member val VPortIn = List<VPortIn>()
-    member val VPortOut = List<VPortOut>()
-    member val LB = List<LoadBalancer>()
-    member val CL = List<Classifier>()
-    member val PPortIn = PPortIn()
-    member val PPortOut = PPortOut()
-    member val Switch = Switch()
-    member this.AvailableCores = float (this.TotalCores - this.NF.Count)
-
-type ToRSwitch () = 
-    member val L2 = Dictionary<PhysicalAddress, Server>()
-    member val Port = Dictionary<Server, int>()
-
 type Placement() = 
-    
     static member private PlaceRandom (plan : IPlan) (servers : IList<Server>) = 
         let rand = new System.Random()
         let n = servers.Count
