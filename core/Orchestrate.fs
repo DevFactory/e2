@@ -88,47 +88,53 @@ type Orchestrator(conf : string) =
     
     // Will refactor using BFS. The code should be much more succinct.
     member this.ApplyServer(server : Server) = 
-        server.Channel.Agent.LaunchSoftNIC([| 0 |]) |> ignore
+        let HandleResponse (resp : Response) =
+            match resp.code with
+            | 0 -> ()
+            | -1 -> () // Not Implemented
+            | _ -> failwith (sprintf "Error code: %d, Message: %s" resp.code resp.msg)
+
+        server.Channel.Agent.LaunchSoftNIC([| 0 |]) |> HandleResponse
         // TODO: 
         // 1. flush SoftNIC modules
         // 2. Setup PPort
-        server.Channel.Agent.CreatePPort("pport") |> ignore
-        server.Channel.Agent.CreateModule("PortOut", string server.PPortOut.Id) |> ignore
-        server.Channel.Agent.CreateModule("PortInc", string server.PPortIn.Id) |> ignore
+        server.Channel.Agent.CreatePPort("pport") |> HandleResponse
+        server.Channel.Agent.CreateModule("PortOut", string server.PPortOut.Id) |> HandleResponse
+        server.Channel.Agent.CreateModule("PortInc", string server.PPortIn.Id) |> HandleResponse
         // TODO: configure PortOut and PortInc
         // 3. Setup E2Switch
-        server.Channel.Agent.CreateModule("E2Switch", string server.Switch.Id) |> ignore
-        server.Channel.Agent.ConnectModule(string server.PPortIn.Id, 0, string server.Switch.Id) |> ignore
-        server.Channel.Agent.ConnectModule(string server.Switch.Id, 0, string server.PPortOut.Id) |> ignore
+        server.Channel.Agent.CreateModule("E2Switch", string server.Switch.Id) |> HandleResponse
+        server.Channel.Agent.ConnectModule(string server.PPortIn.Id, 0, string server.Switch.Id) |> HandleResponse
+        server.Channel.Agent.ConnectModule(string server.Switch.Id, 0, string server.PPortOut.Id) |> HandleResponse
         // Setup first-hop LB
-        server.Channel.Agent.CreateModule("E2LB", string server.FirstHopLB.Id) |> ignore
-        server.Channel.Agent.ConnectModule(string server.Switch.Id, 1, string server.FirstHopLB.Id) |> ignore
-        server.Channel.Agent.ConnectModule(string server.FirstHopLB.Id, 0, string server.Switch.Id) |> ignore
+        server.Channel.Agent.CreateModule("E2LB", string server.FirstHopLB.Id) |> HandleResponse
+        server.Channel.Agent.ConnectModule(string server.Switch.Id, 1, string server.FirstHopLB.Id) |> HandleResponse
+        server.Channel.Agent.ConnectModule(string server.FirstHopLB.Id, 0, string server.Switch.Id) |> HandleResponse
         // TODO: configure first-hop LB
         // 4. Setup VPorts
         for vout in server.VPortOut do
             let vp = vout.NextModules.[0]
             let vin = vp.NextModules.[0]
-            server.Channel.Agent.CreateVPort(string vp.Id) |> ignore
-            server.Channel.Agent.CreateModule("PortInc", string vin.Id) |> ignore
-            server.Channel.Agent.CreateModule("PortOut", string vout.Id) |> ignore
+            server.Channel.Agent.CreateVPort(string vp.Id) |> HandleResponse
+            server.Channel.Agent.CreateModule("PortInc", string vin.Id) |> HandleResponse
+            server.Channel.Agent.CreateModule("PortOut", string vout.Id) |> HandleResponse
             // TODO: configure PortOut and PortInc
             let gate = server.Switch.NextModules.IndexOf(vout) + 2
-            server.Channel.Agent.ConnectModule(string server.Switch.Id, gate, string vout.Id) |> ignore
-            server.Channel.Agent.ConnectModule(string vin.Id, 0, string server.Switch.Id) |> ignore
+            server.Channel.Agent.ConnectModule(string server.Switch.Id, gate, string vout.Id) |> HandleResponse
+            server.Channel.Agent.ConnectModule(string vin.Id, 0, string server.Switch.Id) |> HandleResponse
             // 5. Setup CL
             for m in vin.NextModules do
                 let cl = m :?> Classifier
                 let gate = vin.NextModules.IndexOf(m)
-                server.Channel.Agent.CreateModule("E2Classifier", string cl.Id) |> ignore
-                server.Channel.Agent.ConnectModule(string vin.Id, gate, string cl.Id) |> ignore
+                server.Channel.Agent.CreateModule("E2Classifier", string cl.Id) |> HandleResponse
+                server.Channel.Agent.ConnectModule(string vin.Id, gate, string cl.Id) |> HandleResponse
                 // TODO: configure CL
                 // 6. Setup LB
                 for m in cl.NextModules do
                     let lb = m :?> LoadBalancer
                     let gate = cl.NextModules.IndexOf(m)
-                    server.Channel.Agent.CreateModule("E2LB", string lb.Id) |> ignore
-                    server.Channel.Agent.ConnectModule(string cl.Id, gate, string lb.Id) |> ignore
+                    server.Channel.Agent.CreateModule("E2LB", string lb.Id) |> HandleResponse
+                    server.Channel.Agent.ConnectModule(string cl.Id, gate, string lb.Id) |> HandleResponse
         // TODO: configure LB
         // Run vNF
         let idleNF = server.NF |> Seq.filter (fun v -> not v.IsPlaced)
@@ -140,7 +146,7 @@ type Orchestrator(conf : string) =
                 server.VPort
                 |> Seq.filter (fun vp -> vp.NF = vnf)
                 |> Seq.head
-            server.Channel.Agent.LaunchNF(core, vnf.Parent.Type, string vp.Id, string vnf.Id) |> ignore
+            server.Channel.Agent.LaunchNF(core, vnf.Parent.Type, string vp.Id, string vnf.Id) |> HandleResponse
             vnf.IsPlaced <- true
     
     member this.ApplySwitch() = 

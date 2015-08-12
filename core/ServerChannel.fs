@@ -15,13 +15,20 @@ type ModuleName = string
 
 type ModuleConfig = string
 
+type GateIndex = int
+
 [<Struct>]
 type Response =
     val mutable code : int
     val mutable msg : string
+    [<XmlRpcMissingMapping(MappingAction.Ignore)>]
+    val mutable result : XmlRpcStruct
 
 type IServerAgent = 
     
+    [<XmlRpcMethod("reset")>]
+    abstract ResetSoftNIC : unit -> unit
+
     [<XmlRpcMethod("launch_sn")>]
     abstract LaunchSoftNIC : Cores -> Response
     
@@ -47,16 +54,19 @@ type IServerAgent =
     abstract RemoveModule : ModuleName -> Response
     
     [<XmlRpcMethod("connect_module")>]
-    abstract ConnectModule : ModuleName * int * ModuleName -> Response
+    abstract ConnectModule : ModuleName * GateIndex * ModuleName -> Response
     
     [<XmlRpcMethod("disconnect_module")>]
-    abstract DisconnectModule : ModuleName * int -> Response
+    abstract DisconnectModule : ModuleName * GateIndex -> Response
     
     [<XmlRpcMethod("configure_module")>]
     abstract ConfigureModule : ModuleName * ModuleConfig -> Response
     
-    [<XmlRpcMethod("query_nf_stats")>]
-    abstract QueryNFStats : NFName -> Response
+    [<XmlRpcMethod("query_vport_stats")>]
+    abstract QueryVPortStats : ModuleName -> Response
+
+    [<XmlRpcMethod("query_pport_stats")>]
+    abstract QueryPPortStats : ModuleName -> Response
 
 type ServerChannel (endpoint : IPEndPoint) = 
     let proxy = XmlRpcProxyGen.Create<IServerAgent>()
