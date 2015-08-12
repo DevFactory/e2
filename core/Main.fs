@@ -5,21 +5,21 @@ open System.Collections.Generic
 open CookComputing.XmlRpc
 
 let example = """
-Proxy proxy;
+VPN vpn;
 NAT nat;
 Firewall fw;
 
 TC {
     fw -> nat;
-    nat -> proxy;
+    nat -> vpn;
 }
 
 """
 
 [<EntryPoint>]
 let main args = 
-//    let mgr = Orchestrator example
-//    mgr.InitServer()
-//    mgr.Init()
-//    mgr.Apply()
+    let mgr = Orchestrator example
+    mgr.InitServer()
+    mgr.Init()
+    mgr.Apply()
     0

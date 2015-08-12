@@ -45,23 +45,19 @@ type Server(totalCores : int, ip : IPAddress) =
     member val TotalCores = totalCores
     member val IPAddress = ip
     member val NF = List<IPlanVertex>()
-
     member val VPortIn = List<VPortIn>()
     member val VPortOut = List<VPortOut>()
     member val VPort = List<VPortStruct>()
-
     member val FirstHopLB = LoadBalancer(false)
     member val LB = List<LoadBalancer>()
     member val CL = List<Classifier>()
-
     member val PPortIn = PPortIn()
     member val PPortOut = PPortOut()
     member val PPort = PPortStruct()
-    
     member val Switch = Switch()
     member val Channel = ServerChannel(IPEndPoint(ip, 5555))
     member this.AvailableCores = float (this.TotalCores - this.NF.Count)
 
-type ToRSwitch () = 
+type ToRSwitch() = 
     member val L2 = Dictionary<PhysicalAddress, Server>()
     member val Port = Dictionary<Server, int>()

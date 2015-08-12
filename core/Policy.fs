@@ -9,8 +9,15 @@ type PolicyVertex(name : string, t : string) =
     interface IPolicyVertex with
         member val Name = name
         member val Type = t
-        member val UnitCore = match t with
-                              | _ -> 1.0
+        member val CyclesPerPacket = match t with
+                                     | "IP" -> 500.0
+                                     | "NAT" -> 1000.0
+                                     | "Stat" -> 760.0
+                                     | "Firewall" -> 24000.0
+                                     | "VPN" -> 6100.0
+                                     | "IDS" -> 3200.0
+                                     | "Class" -> 2820.0
+                                     | _ -> failwith ("Undefined NF Type: " + t)
 
 type PolicyEdgeTag(filter : string, attr : string, pipelet : int) = 
     interface IPolicyEdgeTag with
@@ -63,14 +70,9 @@ type Policy() =
         member this.AddEdge e = 
             this.graph.AddEdge(new TaggedEdge<IPolicyVertex, IPolicyEdgeTag>(e.Source, e.Target, e.Tag))
         member this.RemoveVertex v = this.graph.RemoveVertex(v)
-        member this.InEdges v = this.graph.InEdges(v) |> Seq.map TransformEdge
-        member this.OutEdges v = this.graph.OutEdges(v) |> Seq.map TransformEdge
-        
-        member this.GetEdges v1 v2 = 
-            this.graph.OutEdges(v1)
-            |> Seq.filter (fun v -> v.Target = v2)
-            |> Seq.map TransformEdge
-        
+        member this.InEdges v = (this :> IPolicy).Edges |> Seq.filter (fun e -> e.Target = v)
+        member this.OutEdges v = (this :> IPolicy).Edges |> Seq.filter (fun e -> e.Target = v)
+        member this.GetEdges v1 v2 = (this :> IPolicy).OutEdges(v1) |> Seq.filter (fun v -> v.Target = v2)
         member this.Visualize() = 
             let graphviz = new GraphvizAlgorithm<IPolicyVertex, TaggedEdge<IPolicyVertex, IPolicyEdgeTag>>(this.graph)
             let OnFormatVertex(e : FormatVertexEventArgs<IPolicyVertex>) = e.VertexFormatter.Label <- e.Vertex.Name

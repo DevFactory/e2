@@ -33,7 +33,7 @@ type FlatGraph(origin : E2.IGraph<IPlanVertex, IPlanEdgeTag>) =
                     let maxWeightEdge = 
                         edges
                         |> Seq.reduce (fun a b -> 
-                               if a.Tag.Load >= b.Tag.Load then a
+                               if a.Tag.PacketsPerSecond >= b.Tag.PacketsPerSecond then a
                                else b)
                         |> TransformIEdge
                     g.AddEdge(maxWeightEdge) |> ignore

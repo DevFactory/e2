@@ -60,6 +60,7 @@ type IServerAgent =
 
 type ServerChannel (endpoint : IPEndPoint) = 
     let proxy = XmlRpcProxyGen.Create<IServerAgent>()
+    do printfn "Connecting to server: %A" endpoint
     do (proxy :?> IXmlRpcProxy).Url <- "http://" + endpoint.ToString()
 
     member this.Agent = proxy

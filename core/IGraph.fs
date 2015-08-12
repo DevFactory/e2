@@ -33,7 +33,7 @@ type IGraph<'V, 'Tag> =
 type IPolicyVertex = 
     abstract Name : string
     abstract Type : string
-    abstract UnitCore : float // cores per load
+    abstract CyclesPerPacket : float // cores per load
 
 type IPolicyEdgeTag = 
     abstract Filter : string
@@ -48,7 +48,7 @@ type IPlanVertex =
 type IPlanEdgeTag = 
     abstract Id: int
     abstract Parent: IPolicyEdgeTag
-    abstract Load: float with get, set
+    abstract PacketsPerSecond: float with get, set
 
 type IPolicy = 
     inherit IGraph<IPolicyVertex, IPolicyEdgeTag>

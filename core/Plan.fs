@@ -10,15 +10,15 @@ open QuickGraph.Algorithms
 
 type PlanVertex(parent : IPolicyVertex) = 
     interface IPlanVertex with
-        member val Id = Identifier.GetId ()
+        member val Id = Identifier.GetId()
         member val Parent = parent
         member val IsPlaced = true with get, set
 
 type PlanEdgeTag(parent : IPolicyEdgeTag) = 
     interface IPlanEdgeTag with
-        member val Id = Identifier.GetId ()
+        member val Id = Identifier.GetId()
         member val Parent = parent
-        member val Load = 0.0 with get, set
+        member val PacketsPerSecond = 0.0 with get, set
 
 type Plan() = 
     let mutable i = new Dictionary<IPolicyVertex, IList<IPlanVertex>>()
@@ -74,14 +74,9 @@ type Plan() =
             this.instances.[v.Parent].Remove(v) |> ignore
             this.graph.RemoveVertex(v)
         
-        member this.InEdges v = this.graph.InEdges(v) |> Seq.map TransformEdge
-        member this.OutEdges v = this.graph.OutEdges(v) |> Seq.map TransformEdge
-        
-        member this.GetEdges v1 v2 = 
-            this.graph.OutEdges(v1)
-            |> Seq.filter (fun v -> v.Target = v2)
-            |> Seq.map TransformEdge
-        
+        member this.InEdges v = (this :> IPlan).Edges |> Seq.filter (fun e -> e.Target = v)
+        member this.OutEdges v = (this :> IPlan).Edges |> Seq.filter (fun e -> e.Source = v)
+        member this.GetEdges v1 v2 = (this :> IPlan).OutEdges(v1) |> Seq.filter (fun v -> v.Target = v2)
         member this.FindPlanVertices pv = this.instances.[pv]
         member this.FindPlanEdgeTags pe = this.edges.[pe]
         member this.Visualize() = 
@@ -91,7 +86,7 @@ type Plan() =
             
             let OnFormatEdge(e : FormatEdgeEventArgs<IPlanVertex, TaggedEdge<IPlanVertex, IPlanEdgeTag>>) = 
                 let tag = e.Edge.Tag
-                e.EdgeFormatter.Label.Value <- tag.Parent.Filter + " - " + string tag.Load
+                e.EdgeFormatter.Label.Value <- tag.Parent.Filter + " - " + string tag.PacketsPerSecond
             graphviz.FormatVertex.Add(OnFormatVertex)
             graphviz.FormatEdge.Add(OnFormatEdge)
             graphviz.Generate(new FileDotEngine(), "")

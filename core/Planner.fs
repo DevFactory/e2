@@ -27,7 +27,7 @@ type Planner =
     static member Scale (policy : IPolicy) (plan : IPlan) = 
         let PlanVertexLoad v = 
             plan.InEdges v
-            |> Seq.map (fun e -> e.Tag.Load)
+            |> Seq.map (fun e -> e.Tag.PacketsPerSecond)
                             |> Seq.sum
 
         let PolicyVertexLoads pv = 
@@ -39,7 +39,7 @@ type Planner =
             let totalLoad = PolicyVertexLoads pv
                 
             let replicaNumIdeal = 
-                totalLoad * pv.UnitCore
+                totalLoad * pv.CyclesPerPacket / (2.6e+9)
                 |> ceil
                 |> int
                 
@@ -76,12 +76,12 @@ type Planner =
             let BalancePolicyEdge(pe : IEdge<IPolicyVertex, IPolicyEdgeTag>) = 
                 let totalLoad = 
                     plan.FindPlanEdgeTags(pe.Tag)
-                    |> Seq.map (fun tag -> tag.Load)
+                    |> Seq.map (fun tag -> tag.PacketsPerSecond)
                     |> Seq.sum
                     
                 let n = (plan.FindPlanVertices pe.Source).Count * (plan.FindPlanVertices pe.Target).Count
                 let load = totalLoad / (float n)
-                plan.FindPlanEdgeTags(pe.Tag) |> Seq.iter (fun tag -> tag.Load <- load)
+                plan.FindPlanEdgeTags(pe.Tag) |> Seq.iter (fun tag -> tag.PacketsPerSecond <- load)
                 
             // First rebalance loads coming from each of previous edges
             let prevPolicyEdges = policy.Edges |> Seq.filter (fun e -> e.Target = pv)
