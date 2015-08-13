@@ -141,7 +141,6 @@ type Orchestrator(conf : string) =
         // Run idleNF on server
         for vnf in idleNF do
             let core = [| server.NF.IndexOf(vnf) + 1 |]
-            
             let vp = 
                 server.VPort
                 |> Seq.filter (fun vp -> vp.NF = vnf)
