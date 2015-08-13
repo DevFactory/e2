@@ -20,7 +20,7 @@ type Orchestrator(conf : string) =
         //                       ("192.168.0.2", 16, 1);
         //                       ("192.168.0.3", 16, 2);
         //                       ("192.168.0.4", 16, 3)]
-        let servers = [ ("127.0.0.1", 16, 0) ]
+        let servers = [ ("127.0.0.1", 16, 1) ]
         for (ip, cores, port) in servers do
             let server = Server(cores, IPAddress.Parse(ip))
             this.Servers.Add(server)
@@ -149,14 +149,24 @@ type Orchestrator(conf : string) =
             vnf.IsPlaced <- true
     
     member this.ApplySwitch() = 
-        // TODO: 
+        let HandleResponse code =
+            match code with
+            | 0 -> ()
+            | x -> failwith (sprintf "Error code: %d" x)
+
+        this.ToR.Channel.CleanTables ()
+
         // Setup L2 ACL
         this.ToR.L2 |> Seq.iteri (fun i entry ->
             let dmac = entry.Key
+            let dmacFormat = BitConverter.ToString(dmac.GetAddressBytes()).Replace('-', ':')
             let server = entry.Value
             let port = this.ToR.Port.[server]
+            let index = i + 1
             printfn "%A -> %d" dmac port
-            //this.ToR.Channel.Agent.ACLExpressionsAddRow(i + 100, "DstMac", "ff:ff:ff:ff:ff:ff", )
+            this.ToR.Channel.Agent.ACLExpressionsAddRow(index, "DstMac", "ff:ff:ff:ff:ff:ff", dmacFormat) |> HandleResponse
+            this.ToR.Channel.Agent.ACLActionsAddRow(index, "Redirect", string port) |> HandleResponse
+            this.ToR.Channel.Agent.ACLRulesAddRow(index, index, index, "Ingress", "Enabled", 1) |> HandleResponse
         )
     
     member this.Apply() = 
