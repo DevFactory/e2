@@ -58,6 +58,7 @@ type Server(totalCores : int, ip : IPAddress) =
     member val Channel = ServerChannel(IPEndPoint(ip, 5555))
     member this.AvailableCores = float (this.TotalCores - this.NF.Count)
 
-type ToRSwitch() = 
+type ToRSwitch(ip : IPAddress) = 
     member val L2 = Dictionary<PhysicalAddress, Server>()
     member val Port = Dictionary<Server, int>()
+    member val Channel = SwitchChannel(IPEndPoint(ip, 2000))

@@ -10,7 +10,7 @@ type Orchestrator(conf : string) =
     let blueprint = Policy()
     do blueprint.LoadPolicyState state
     member val Servers = List<Server>()
-    member val ToR = ToRSwitch()
+    member val ToR = ToRSwitch(IPAddress.Parse("127.0.0.1"))
     member this.Policy = blueprint
     member this.Plan = Planner.InitialPlan(this.Policy)
     
@@ -150,13 +150,14 @@ type Orchestrator(conf : string) =
     
     member this.ApplySwitch() = 
         // TODO: 
-        // Setup L2
-        for entry in this.ToR.L2 do
+        // Setup L2 ACL
+        this.ToR.L2 |> Seq.iteri (fun i entry ->
             let dmac = entry.Key
             let server = entry.Value
             let port = this.ToR.Port.[server]
             printfn "%A -> %d" dmac port
-        ()
+            //this.ToR.Channel.Agent.ACLExpressionsAddRow(i + 100, "DstMac", "ff:ff:ff:ff:ff:ff", )
+        )
     
     member this.Apply() = 
         this.Servers |> Seq.iter this.ApplyServer
