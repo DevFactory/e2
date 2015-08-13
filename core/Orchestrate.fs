@@ -9,10 +9,12 @@ type Orchestrator(conf : string) =
     let state = Parser.Parse conf
     let blueprint = Policy()
     do blueprint.LoadPolicyState state
+    let plan = Planner.InitialPlan(blueprint)
+
     member val Servers = List<Server>()
-    member val ToR = ToRSwitch(IPAddress.Parse("127.0.0.1"))
-    member this.Policy = blueprint
-    member this.Plan = Planner.InitialPlan(this.Policy)
+    member val ToR = ToRSwitch([17;18;19;20], IPAddress.Parse("127.0.0.1"))
+    member this.Policy = blueprint :> IPolicy
+    member this.Plan = plan
     
     member this.InitServer() = 
         printfn "Init servers..."
@@ -35,16 +37,24 @@ type Orchestrator(conf : string) =
             server.Switch.NextModules.Add(server.FirstHopLB)
     
     member this.Init() = 
+        printfn "Init graph..."
+        printfn "vNF: %A" this.Plan.Vertices
         //Planner.Scale this.Policy this.Plan
+
+        printfn "Set up LB for first-hop vNFs..."
         // FIXME: Assume only one first-hop NF
+        
         let firstHopVNF = 
             this.Plan.Vertices |> Seq.filter (fun vnf -> 
                                       vnf
                                       |> this.Plan.InEdges
                                       |> Seq.isEmpty)
+        printfn "First-hop vNF: %A" firstHopVNF
+
         for server in this.Servers do
             let dmacs = firstHopVNF |> Seq.map (fun vnf -> PhysicalAddress.Parse("06" + vnf.Id.ToString("X10")))
             server.FirstHopLB.ReplicaDMAC.AddRange(dmacs)
+
         let scheme = Placement.Place this.Plan this.Servers
         for entry in scheme do
             let server = entry.Value
@@ -70,7 +80,7 @@ type Orchestrator(conf : string) =
             server.CL.Add(cl)
             vpin.NextModules.Add(cl)
             // Enumerate all next hop NF
-            let nextHopEdges = vnf.Parent |> (this.Policy :> IPolicy).OutEdges
+            let nextHopEdges = vnf.Parent |> this.Policy.OutEdges
             for e in nextHopEdges do
                 // Make a new LB for each next hop NF
                 let lb = LoadBalancer(false)
@@ -136,7 +146,7 @@ type Orchestrator(conf : string) =
                     server.Channel.Agent.CreateModule("E2LB", string lb.Id) |> HandleResponse
                     server.Channel.Agent.ConnectModule(string cl.Id, gate, string lb.Id) |> HandleResponse
         // TODO: configure LB
-        // Run vNF
+        // Run vNF 
         let idleNF = server.NF |> Seq.filter (fun v -> not v.IsPlaced)
         // Run idleNF on server
         for vnf in idleNF do
@@ -154,9 +164,51 @@ type Orchestrator(conf : string) =
             | 0 -> ()
             | x -> failwith (sprintf "Error code: %d" x)
 
+        printfn "Clean up previous ACL tables..."
         this.ToR.Channel.CleanTables ()
 
+        // Setup First-hop ACL
+        printfn "Set up ACL tables for first-hop vNF..."
+        let firstHopVNF = 
+            this.Plan.Vertices |> Seq.filter (fun vnf -> 
+                                      vnf
+                                      |> this.Plan.InEdges
+                                      |> Seq.isEmpty)
+        
+        printfn "%A" firstHopVNF
+
+        let findServer vnf = 
+            this.Servers |> Seq.filter (fun s -> s.NF.Contains(vnf)) |> Seq.exactlyOne
+
+        let firstHopServers = firstHopVNF |> Seq.map findServer
+        let firstHopPorts = firstHopServers |> Seq.map (fun s -> this.ToR.Port.[s])
+        let numPorts = firstHopPorts |> Seq.length
+        let factor = 100 / numPorts
+        let ingressPorts = this.ToR.IngressPort |> Seq.map string |> String.concat ","
+
+        let RedirectIngress index l4port port =
+            this.ToR.Channel.Agent.ACLExpressionsAddRow(index, "InPorts", "", ingressPorts) |> HandleResponse
+            this.ToR.Channel.Agent.ACLExpressionsAddRow(index, "L4SrcPort", "65535", string l4port) |> HandleResponse
+            this.ToR.Channel.Agent.ACLActionsAddRow(index, "Redirect", string port) |> HandleResponse
+            this.ToR.Channel.Agent.ACLRulesAddRow(index, index, index, "Ingress", "Enabled", 2) |> HandleResponse
+
+        // FIXME: this code look ugly
+        firstHopPorts |> Seq.iteri (fun i port ->
+            let low = i * factor
+            let high = low + factor - 1
+
+            for j = low to high do
+                let index = j + 1000
+                RedirectIngress index j port
+
+            if i = numPorts - 1 then
+                for j = high + 1 to 99 do
+                    let index = j + 1000
+                    RedirectIngress index j port
+        )
+
         // Setup L2 ACL
+        printfn "Set up ACL tables for other vNF..."
         this.ToR.L2 |> Seq.iteri (fun i entry ->
             let dmac = entry.Key
             let dmacFormat = BitConverter.ToString(dmac.GetAddressBytes()).Replace('-', ':')

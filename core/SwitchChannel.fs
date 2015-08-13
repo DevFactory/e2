@@ -51,6 +51,7 @@ type ISwitchNorthbound =
 
 type SwitchChannel (endpoint : IPEndPoint) = 
     let proxy = XmlRpcProxyGen.Create<ISwitchNorthbound>()
+    do printfn "Connect to ToR switch: %A" endpoint
     do (proxy :?> IXmlRpcProxy).Url <- "http://" + endpoint.ToString() + "/RPC2"
 
     member this.Agent = proxy

@@ -18,6 +18,7 @@ type PolicyVertex(name : string, t : string) =
                                      | "IDS" -> 3200.0
                                      | "Class" -> 2820.0
                                      | _ -> failwith ("Undefined NF Type: " + t)
+    override this.ToString() = "PolicyVertex Hash: " + this.GetHashCode().ToString()
 
 type PolicyEdgeTag(filter : string, attr : string, pipelet : int) = 
     interface IPolicyEdgeTag with
