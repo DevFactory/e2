@@ -9,11 +9,10 @@ open QuickGraph.Serialization
 open QuickGraph.Algorithms
 
 type PlanVertex(parent : IPolicyVertex) = 
-    let id = Identifier.GetId()
     interface IPlanVertex with
-        member this.Id = id
+        member val Id = Identifier.GetId()
         member val Parent = parent
-        member val IsPlaced = true with get, set
+        member val IsPlaced = false with get, set
     override this.ToString() = "PlanVertex: " + (this :> IPlanVertex).Id.ToString() + " Hash: " + this.GetHashCode().ToString()
 
 type PlanEdgeTag(parent : IPolicyEdgeTag) = 

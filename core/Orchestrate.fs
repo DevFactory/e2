@@ -37,8 +37,7 @@ type Orchestrator(conf : string) =
             server.Switch.NextModules.Add(server.FirstHopLB)
     
     member this.Init() = 
-        printfn "Init graph..."
-        printfn "vNF: %A" this.Plan.Vertices
+        printfn "Init internal states..."
         //Planner.Scale this.Policy this.Plan
 
         printfn "Set up LB for first-hop vNFs..."
@@ -103,23 +102,42 @@ type Orchestrator(conf : string) =
             | 0 -> ()
             | -1 -> () // Not Implemented
             | _ -> failwith (sprintf "Error code: %d, Message: %s" resp.code resp.msg)
-
-        server.Channel.Agent.LaunchSoftNIC([| 0 |]) |> HandleResponse
-        // TODO: 
+        
         // 1. flush SoftNIC modules
+        printfn "On Server %A:" server.IPAddress
+        printfn "Reset SoftNIC."
+        server.Channel.Agent.ResetSoftNIC() |> HandleResponse
+        
         // 2. Setup PPort
+        printfn "Create PPort."
         server.Channel.Agent.CreatePPort("pport") |> HandleResponse
+
+        printfn "Create PPort's PortInc and PortOut modules."
         server.Channel.Agent.CreateModule("PortOut", string server.PPortOut.Id) |> HandleResponse
         server.Channel.Agent.CreateModule("PortInc", string server.PPortIn.Id) |> HandleResponse
+
         // TODO: configure PortOut and PortInc
+        
         // 3. Setup E2Switch
+        printfn "Create PPort's PortInc and PortOut modules."
         server.Channel.Agent.CreateModule("E2Switch", string server.Switch.Id) |> HandleResponse
+
+        printfn "Connect PPortPortInc[0] -> E2Switch."
         server.Channel.Agent.ConnectModule(string server.PPortIn.Id, 0, string server.Switch.Id) |> HandleResponse
+
+        printfn "Connect E2Switch[0] -> PPortPortOut."
         server.Channel.Agent.ConnectModule(string server.Switch.Id, 0, string server.PPortOut.Id) |> HandleResponse
+
         // Setup first-hop LB
+        printfn "Create the first-hop LB module."
         server.Channel.Agent.CreateModule("E2LB", string server.FirstHopLB.Id) |> HandleResponse
+
+        printfn "Connect E2Switch[1] -> FirstHopLB."
         server.Channel.Agent.ConnectModule(string server.Switch.Id, 1, string server.FirstHopLB.Id) |> HandleResponse
+
+        printfn "Connect FirstHopLB[0] -> E2Switch."
         server.Channel.Agent.ConnectModule(string server.FirstHopLB.Id, 0, string server.Switch.Id) |> HandleResponse
+
         // TODO: configure first-hop LB
         // 4. Setup VPorts
         for vout in server.VPortOut do
@@ -128,24 +146,31 @@ type Orchestrator(conf : string) =
             server.Channel.Agent.CreateVPort(string vp.Id) |> HandleResponse
             server.Channel.Agent.CreateModule("PortInc", string vin.Id) |> HandleResponse
             server.Channel.Agent.CreateModule("PortOut", string vout.Id) |> HandleResponse
+
             // TODO: configure PortOut and PortInc
+            
             let gate = server.Switch.NextModules.IndexOf(vout) + 2
             server.Channel.Agent.ConnectModule(string server.Switch.Id, gate, string vout.Id) |> HandleResponse
             server.Channel.Agent.ConnectModule(string vin.Id, 0, string server.Switch.Id) |> HandleResponse
+            
             // 5. Setup CL
             for m in vin.NextModules do
                 let cl = m :?> Classifier
                 let gate = vin.NextModules.IndexOf(m)
                 server.Channel.Agent.CreateModule("E2Classifier", string cl.Id) |> HandleResponse
                 server.Channel.Agent.ConnectModule(string vin.Id, gate, string cl.Id) |> HandleResponse
+                
                 // TODO: configure CL
+                
                 // 6. Setup LB
                 for m in cl.NextModules do
                     let lb = m :?> LoadBalancer
                     let gate = cl.NextModules.IndexOf(m)
                     server.Channel.Agent.CreateModule("E2LB", string lb.Id) |> HandleResponse
                     server.Channel.Agent.ConnectModule(string cl.Id, gate, string lb.Id) |> HandleResponse
+        
         // TODO: configure LB
+        
         // Run vNF 
         let idleNF = server.NF |> Seq.filter (fun v -> not v.IsPlaced)
         // Run idleNF on server
@@ -154,7 +179,9 @@ type Orchestrator(conf : string) =
             let vp = 
                 server.VPort
                 |> Seq.filter (fun vp -> vp.NF = vnf)
-                |> Seq.head
+                |> Seq.exactlyOne
+
+            printfn "Launch NF %d of %s on vport %d and core %d." vnf.Id vnf.Parent.Type vp.Id core.[0]
             server.Channel.Agent.LaunchNF(core, vnf.Parent.Type, string vp.Id, string vnf.Id) |> HandleResponse
             vnf.IsPlaced <- true
     
@@ -174,8 +201,6 @@ type Orchestrator(conf : string) =
                                       vnf
                                       |> this.Plan.InEdges
                                       |> Seq.isEmpty)
-        
-        printfn "%A" firstHopVNF
 
         let findServer vnf = 
             this.Servers |> Seq.filter (fun s -> s.NF.Contains(vnf)) |> Seq.exactlyOne
@@ -194,15 +219,17 @@ type Orchestrator(conf : string) =
 
         // FIXME: this code look ugly
         firstHopPorts |> Seq.iteri (fun i port ->
-            let low = i * factor
-            let high = low + factor - 1
+            let low = i * factor + 1
+            let high = (i + 1) * factor
 
+            printfn "L4 Src Port %d-%d -> Switch Port %d..." low high port
             for j = low to high do
                 let index = j + 1000
                 RedirectIngress index j port
 
             if i = numPorts - 1 then
-                for j = high + 1 to 99 do
+                if high + 1 <= 100 then printfn "L4 Src Port %d-%d -> Switch Port %d..." (high + 1) 100 port
+                for j = high + 1 to 100 do
                     let index = j + 1000
                     RedirectIngress index j port
         )
@@ -215,7 +242,7 @@ type Orchestrator(conf : string) =
             let server = entry.Value
             let port = this.ToR.Port.[server]
             let index = i + 1
-            printfn "%A -> %d" dmac port
+            printfn "Destination MAC %s -> Switch Port %d..." dmacFormat port
             this.ToR.Channel.Agent.ACLExpressionsAddRow(index, "DstMac", "ff:ff:ff:ff:ff:ff", dmacFormat) |> HandleResponse
             this.ToR.Channel.Agent.ACLActionsAddRow(index, "Redirect", string port) |> HandleResponse
             this.ToR.Channel.Agent.ACLRulesAddRow(index, index, index, "Ingress", "Enabled", 1) |> HandleResponse

@@ -27,7 +27,7 @@ type Response =
 type IServerAgent = 
     
     [<XmlRpcMethod("reset")>]
-    abstract ResetSoftNIC : unit -> unit
+    abstract ResetSoftNIC : unit -> Response
 
     [<XmlRpcMethod("launch_sn")>]
     abstract LaunchSoftNIC : Cores -> Response
