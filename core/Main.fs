@@ -5,13 +5,13 @@ open System.Collections.Generic
 open CookComputing.XmlRpc
 
 let example = """
-VPN vpn;
-NAT nat;
-Firewall fw;
+vpn vpn0;
+nat nat0;
+firewall fw0;
 
 TC {
-    fw -> nat;
-    nat -> vpn;
+    fw0 -> nat0;
+    nat0 -> vpn0;
 }
 
 """

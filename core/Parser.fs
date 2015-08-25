@@ -5,7 +5,7 @@ open System
 open System.Collections.Generic
 
 let ptype = 
-    let opts = IdentifierOptions(isAsciiIdStart = isAsciiUpper)
+    let opts = IdentifierOptions()
     identifier opts .>> spaces
 
 let pvar = 

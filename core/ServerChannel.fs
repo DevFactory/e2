@@ -2,6 +2,7 @@
 
 open CookComputing.XmlRpc
 open System.Net
+open System
 
 type Cores = int array
 
@@ -18,11 +19,20 @@ type ModuleConfig = string
 type GateIndex = int
 
 [<Struct>]
+type PortStat = 
+    val mutable port : string
+    val mutable out_pps : int
+    val mutable inc_pps : int
+    val mutable out_qlen : int
+    val mutable out_bps : int
+    val mutable inc_bps : int
+
+[<Struct>]
 type Response =
     val mutable code : int
     val mutable msg : string
     [<XmlRpcMissingMapping(MappingAction.Ignore)>]
-    val mutable result : XmlRpcStruct
+    val mutable result : PortStat array
 
 type IServerAgent = 
     
@@ -49,6 +59,9 @@ type IServerAgent =
     
     [<XmlRpcMethod("create_module")>]
     abstract CreateModule : ModuleType * ModuleName -> Response
+
+    [<XmlRpcMethod("create_module_with_arg")>]
+    abstract CreateModuleEx : ModuleType * ModuleName * Object * bool -> Response
     
     [<XmlRpcMethod("remove_module")>]
     abstract RemoveModule : ModuleName -> Response
@@ -63,14 +76,17 @@ type IServerAgent =
     abstract ConfigureModule : ModuleName * ModuleConfig -> Response
     
     [<XmlRpcMethod("query_vport_stats")>]
-    abstract QueryVPortStats : ModuleName -> Response
+    abstract QueryVPortStats : unit -> Response
 
     [<XmlRpcMethod("query_pport_stats")>]
     abstract QueryPPortStats : ModuleName -> Response
 
-type ServerChannel (endpoint : IPEndPoint) = 
+    [<XmlRpcMethod("query_module")>]
+    abstract QueryModule : ModuleName * Object -> Response
+
+type ServerChannel (addr : string, port : int) = 
     let proxy = XmlRpcProxyGen.Create<IServerAgent>()
-    do printfn "Connect to server: %A" endpoint
-    do (proxy :?> IXmlRpcProxy).Url <- "http://" + endpoint.ToString()
+    do printfn "Connect to server: %A" addr
+    do (proxy :?> IXmlRpcProxy).Url <- "http://" + addr + ":" + port.ToString()
 
     member this.Agent = proxy

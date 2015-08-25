@@ -138,7 +138,7 @@ type Placement() =
         let dict = new Dictionary<IPlanVertex, Server>(placement)
         
         let PlaceVertex(v : IPlanVertex) = 
-            assert (not v.IsPlaced)
+            assert (v.State <> Placed)
             let Cost s = 
                 let e1 = plan.InEdges v |> Seq.filter (fun e -> dict.ContainsKey(e.Source) && dict.[e.Source] <> s)
                 let e2 = plan.OutEdges v |> Seq.filter (fun e -> dict.ContainsKey(e.Target) && dict.[e.Target] <> s)
@@ -148,15 +148,14 @@ type Placement() =
                 |> Seq.sum
             
             let candidates = servers |> Seq.filter (fun s -> s.AvailableCores >= 1.0)
-            if Seq.isEmpty candidates then failwith "Not enough servers for placement."
+            if Seq.isEmpty candidates then 
+                failwith "Not enough servers for placement."
             else 
                 let choice = 
-                    candidates |> Seq.reduce (fun s1 s2 -> 
-                                      if Cost s1 <= Cost s2 then s1
-                                      else s2)
+                    candidates |> Seq.reduce (fun s1 s2 -> if Cost s1 <= Cost s2 then s1 else s2)
                 dict.Add(v, choice)
         plan.Vertices
-        |> Seq.filter (fun v -> (not v.IsPlaced))
+        |> Seq.filter (fun v -> (v.State <> Placed))
         |> Seq.iter PlaceVertex
         dict :> IDictionary<IPlanVertex, Server>
     

@@ -10,13 +10,13 @@ type PolicyVertex(name : string, t : string) =
         member val Name = name
         member val Type = t
         member val CyclesPerPacket = match t with
-                                     | "IP" -> 500.0
-                                     | "NAT" -> 1000.0
-                                     | "Stat" -> 760.0
-                                     | "Firewall" -> 24000.0
-                                     | "VPN" -> 6100.0
-                                     | "IDS" -> 3200.0
-                                     | "Class" -> 2820.0
+                                     | "ip" -> 500.0
+                                     | "nat" -> 1000.0
+                                     | "stat" -> 760.0
+                                     | "firewall" -> 24000.0
+                                     | "vpn" -> 6100.0
+                                     | "ids" -> 3200.0
+                                     | "class" -> 2820.0
                                      | _ -> failwith ("Undefined NF Type: " + t)
     override this.ToString() = "PolicyVertex Hash: " + this.GetHashCode().ToString()
 
@@ -43,6 +43,7 @@ type Policy() =
         nfs
         |> List.fold (fun result nf -> result && this.graph.AddVertex(nf)) true
         |> ignore
+        
         state.E
         |> List.mapi (fun i lst -> 
                let AddEdge result (v1, v2, e1, e2) = 

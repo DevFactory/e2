@@ -12,7 +12,7 @@ type PlanVertex(parent : IPolicyVertex) =
     interface IPlanVertex with
         member val Id = Identifier.GetId()
         member val Parent = parent
-        member val IsPlaced = false with get, set
+        member val State = New with get, set
     override this.ToString() = "PlanVertex: " + (this :> IPlanVertex).Id.ToString() + " Hash: " + this.GetHashCode().ToString()
 
 type PlanEdgeTag(parent : IPolicyEdgeTag) = 
@@ -91,53 +91,3 @@ type Plan() =
             graphviz.FormatVertex.Add(OnFormatVertex)
             graphviz.FormatEdge.Add(OnFormatEdge)
             graphviz.Generate(new FileDotEngine(), "")
-//type PlanUpdate(plan: Plan) = 
-//    let g = plan.graph.Clone()
-//
-//    let new_v = new HashSet<IPlanVertex>()
-//    let new_e = new HashSet<TaggedEdge<IPlanVertex, IPlanEdgeTag>>()
-//    
-//    let del_v = new HashSet<IPlanVertex>()
-//
-//    let TransformEdge (e: TaggedEdge<IPlanVertex, IPlanEdgeTag>) =
-//        new E2.Edge<IPlanVertex, IPlanEdgeTag>(e.Source, e.Target, e.Tag) :> IEdge<IPlanVertex, IPlanEdgeTag>
-//
-//    let TransformIEdge (e: IEdge<IPlanVertex, IPlanEdgeTag>) =
-//        new TaggedEdge<IPlanVertex, IPlanEdgeTag>(e.Source, e.Target, e.Tag)
-//
-//    interface IPlanUpdate with
-//        member this.Vertices = g.Vertices.Union(new_v).Except(del_v)
-//        
-//        member this.Edges = g.Edges.Union(new_e) |> Seq.map TransformEdge
-//
-//        member this.AddVertex v = 
-//            new_v.Add(v)
-//
-//        member this.RemoveVertex v = 
-//            del_v.Add(v)
-//
-//        member this.AddEdge e = 
-//            new_e.Add(TransformIEdge e)
-//        
-//        member this.InEdges v = 
-//            g.Edges.Union(new_e) |> Seq.filter (fun e -> e.Target = v)
-//                                 |> Seq.map TransformEdge
-//        member this.OutEdges v = 
-//            g.Edges.Union(new_e) |> Seq.filter (fun e -> e.Source = v)
-//                                 |> Seq.map TransformEdge
-//
-//        member this.GetEdges v1 v2 = 
-//            (this :> IPlanUpdate).OutEdges v1 |> Seq.filter (fun v -> v.Target = v2) 
-//
-//        member this.GetPlan = 
-//            let p = new Plan()
-//            (this :> IPlanUpdate).Vertices |> Seq.iter (fun v -> (p :> IPlan).AddVertex v |> ignore)
-//            (this :> IPlanUpdate).Edges |> Seq.iter (fun e -> (p :> IPlan).AddEdge e |> ignore)
-//            p :> IPlan
-//
-//        member this.FindInstanceFromPolicy pv = 
-//            (this :> IPlanUpdate).GetPlan.FindInstanceFromPolicy pv
-//
-//        member this.NewVertices = new_v :> IEnumerable<IPlanVertex>
-//        member this.NewEdges = new_e |> Seq.map TransformEdge
-//        member this.RemovedVertices = del_v :> IEnumerable<IPlanVertex>

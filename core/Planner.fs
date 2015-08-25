@@ -20,6 +20,7 @@ type Planner =
             let tag' = new PlanEdgeTag(e.Tag.Parent)
             let e' = new Edge<IPlanVertex, IPlanEdgeTag>(replica, target, tag')
             plan.AddEdge(e') |> ignore
+        replica
 
     static member ScaleDownPlanVertex (v : IPlanVertex) (policy : IPolicy) (plan: IPlan) =
         plan.RemoveVertex(v)
@@ -48,16 +49,16 @@ type Planner =
             let prevPlanVerticesWithPolicyTag = 
                 policy.Edges
                 |> Seq.filter (fun e -> e.Target = pv)
-                                |> Seq.map (fun e -> (e.Source, e.Tag))
+                |> Seq.map (fun e -> (e.Source, e.Tag))
                 |> Seq.map (fun (pv, ptag) -> plan.FindPlanVertices pv |> Seq.map (fun v -> (v, ptag)))
-                                |> Seq.concat
+                |> Seq.concat
 
             let nextPlanVerticesWithPolicyTag = 
                 policy.Edges
                 |> Seq.filter (fun e -> e.Source = pv)
-                                |> Seq.map (fun e -> (e.Target, e.Tag))
+                |> Seq.map (fun e -> (e.Target, e.Tag))
                 |> Seq.map (fun (pv, ptag) -> plan.FindPlanVertices pv |> Seq.map (fun v -> (v, ptag)))
-                                |> Seq.concat
+                |> Seq.concat
 
             let AddEdge v1 v2 ptag =
                 let tag = new PlanEdgeTag(ptag)
@@ -71,23 +72,28 @@ type Planner =
                     plan.AddVertex replica |> ignore
                     prevPlanVerticesWithPolicyTag |> Seq.iter (fun (v, ptag) -> AddEdge v replica ptag |> ignore)
                     nextPlanVerticesWithPolicyTag |> Seq.iter (fun (v, ptag) -> AddEdge replica v ptag |> ignore)
+            else if replicaNumIdeal < replicaNum / 2 then
+                let vs = plan.FindPlanVertices pv
+                let redundant = vs |> Seq.take (replicaNum - replicaNumIdeal)
+                redundant |> Seq.iter (fun v -> v.State <- Deleted)
+
             // Manually rebalance load value to avoid repeated scaling.
             // Ideally we should not do this, because it will be updated via notification.
-            let BalancePolicyEdge(pe : IEdge<IPolicyVertex, IPolicyEdgeTag>) = 
-                let totalLoad = 
-                    plan.FindPlanEdgeTags(pe.Tag)
-                    |> Seq.map (fun tag -> tag.PacketsPerSecond)
-                    |> Seq.sum
-                    
-                let n = (plan.FindPlanVertices pe.Source).Count * (plan.FindPlanVertices pe.Target).Count
-                let load = totalLoad / (float n)
-                plan.FindPlanEdgeTags(pe.Tag) |> Seq.iter (fun tag -> tag.PacketsPerSecond <- load)
-                
-            // First rebalance loads coming from each of previous edges
-            let prevPolicyEdges = policy.Edges |> Seq.filter (fun e -> e.Target = pv)
-            prevPolicyEdges |> Seq.iter BalancePolicyEdge
-            // Then rebalance loads to each of next edges
-            let nextPolicyEdges = policy.Edges |> Seq.filter (fun e -> e.Source = pv)
-            nextPolicyEdges |> Seq.iter BalancePolicyEdge
+//            let BalancePolicyEdge(pe : IEdge<IPolicyVertex, IPolicyEdgeTag>) = 
+//                let totalLoad = 
+//                    plan.FindPlanEdgeTags(pe.Tag)
+//                    |> Seq.map (fun tag -> tag.PacketsPerSecond)
+//                    |> Seq.sum
+//                    
+//                let n = (plan.FindPlanVertices pe.Source).Count * (plan.FindPlanVertices pe.Target).Count
+//                let load = totalLoad / (float n)
+//                plan.FindPlanEdgeTags(pe.Tag) |> Seq.iter (fun tag -> tag.PacketsPerSecond <- load)
+//                
+//            // First rebalance loads coming from each of previous edges
+//            let prevPolicyEdges = policy.Edges |> Seq.filter (fun e -> e.Target = pv)
+//            prevPolicyEdges |> Seq.iter BalancePolicyEdge
+//            // Then rebalance loads to each of next edges
+//            let nextPolicyEdges = policy.Edges |> Seq.filter (fun e -> e.Source = pv)
+//            nextPolicyEdges |> Seq.iter BalancePolicyEdge
             
         policy.Vertices |> Seq.iter Scale

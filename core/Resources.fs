@@ -40,10 +40,10 @@ type PPortOut() =
 type PPortStruct() = 
     inherit Module()
 
-type Server(totalCores : int, ip : IPAddress) = 
+type Server(totalCores : int, addr : string) = 
     member val Id = Identifier.GetId()
     member val TotalCores = totalCores
-    member val IPAddress = ip
+    member val Address = addr
     member val NF = List<IPlanVertex>()
     member val VPortIn = List<VPortIn>()
     member val VPortOut = List<VPortOut>()
@@ -55,7 +55,7 @@ type Server(totalCores : int, ip : IPAddress) =
     member val PPortOut = PPortOut()
     member val PPort = PPortStruct()
     member val Switch = Switch()
-    member val Channel = ServerChannel(IPEndPoint(ip, 5555))
+    member val Channel = ServerChannel(addr, 5555)
     member this.AvailableCores = float (this.TotalCores - this.NF.Count)
 
 type ToRSwitch(ingressPort: int list, ip : IPAddress) = 

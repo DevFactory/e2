@@ -40,10 +40,15 @@ type IPolicyEdgeTag =
     abstract Attribute : string
     abstract PipeletId : int
 
+type VertexState = 
+    | New
+    | Placed
+    | Deleted
+
 type IPlanVertex = 
     abstract Id: int
     abstract Parent: IPolicyVertex
-    abstract IsPlaced: bool with get, set
+    abstract State: VertexState with get, set
 
 type IPlanEdgeTag = 
     abstract Id: int
