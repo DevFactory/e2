@@ -73,7 +73,7 @@ type Policy() =
             this.graph.AddEdge(new TaggedEdge<IPolicyVertex, IPolicyEdgeTag>(e.Source, e.Target, e.Tag))
         member this.RemoveVertex v = this.graph.RemoveVertex(v)
         member this.InEdges v = (this :> IPolicy).Edges |> Seq.filter (fun e -> e.Target = v)
-        member this.OutEdges v = (this :> IPolicy).Edges |> Seq.filter (fun e -> e.Target = v)
+        member this.OutEdges v = (this :> IPolicy).Edges |> Seq.filter (fun e -> e.Source = v)
         member this.GetEdges v1 v2 = (this :> IPolicy).OutEdges(v1) |> Seq.filter (fun v -> v.Target = v2)
         member this.Visualize() = 
             let graphviz = new GraphvizAlgorithm<IPolicyVertex, TaggedEdge<IPolicyVertex, IPolicyEdgeTag>>(this.graph)

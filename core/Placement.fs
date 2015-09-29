@@ -6,24 +6,16 @@ open System.Collections.Generic
 open System.Net.NetworkInformation
 open QuickGraph
 
-type Placement() = 
-    
-    static member private PlaceRandom (plan : IPlan) (servers : IList<Server>) = 
-        let rand = new System.Random()
-        let n = servers.Count
-        let dict = new Dictionary<IPlanVertex, Server>()
-        plan.Vertices |> Seq.iter (fun v -> 
-                             let k = rand.Next(n)
-                             dict.Add(v, servers.[k]))
-        dict :> IDictionary<IPlanVertex, Server>
-    
-    static member private PlaceBreadthFirst (plan : IPlan) (servers : IList<Server>) = 
+type Placement() =     
+    static member private PlaceBreadthFirst (plan : IPlan) (servers : IList<Server>) (fake : bool) = 
+        let placement = new Dictionary<IPlanVertex, Server>()
+        
         let fg = new FlatGraph(plan)
         let g = fg :> E2.IUndirectedGraph<IPlanVertex, IPlanEdgeTag>
         // I like immutable too, but...
         let mutable serverIndex = 0
-        let mutable usedCores = 0.0
-        let dict = Dictionary<IPlanVertex, Server>()
+        let mutable usedCores = 0
+
         let colors = new Dictionary<IPlanVertex, GraphColor>()
         let pending = new Queue<IPlanVertex>()
         // Initialize
@@ -39,18 +31,23 @@ type Placement() =
                 |> Seq.head
             colors.[start] <- GraphColor.Gray
             pending.Enqueue(start)
+        
         // Main BFS loop
         while pending.Count <> 0 do
             let current = pending.Dequeue()
             colors.[current] <- GraphColor.Black
+            
             // Place current NF
-            if serverIndex >= servers.Count then failwith "Not enough servers for placement."
-            if 1.0 <= servers.[serverIndex].AvailableCores - usedCores then 
-                usedCores <- usedCores + 1.0
-                dict.Add(current, servers.[serverIndex])
+            if 1 <= servers.[serverIndex].Cores.Count - usedCores then 
+                usedCores <- usedCores + 1
             else 
-                usedCores <- 0.0
+                usedCores <- 0
                 serverIndex <- serverIndex + 1
+                if serverIndex >= servers.Count then failwith "Not enough servers for placement."
+
+            placement.Add(current, servers.[serverIndex])
+            if not fake then current.State <- Assigned
+
             let edges = g.AdjacentEdges(current)
             for e in edges do
                 let v = 
@@ -59,10 +56,10 @@ type Placement() =
                 if colors.[v] = GraphColor.White then 
                     colors.[v] <- GraphColor.Gray
                     pending.Enqueue(v)
-        dict :> IDictionary<IPlanVertex, Server>
+        placement
     
-    static member private PlaceHeuristic (plan : IPlan) (servers : IList<Server>) = 
-        let dict = Placement.PlaceBreadthFirst plan servers
+    static member private PlaceHeuristic (plan : IPlan) (servers : IList<Server>) (fake : bool) = 
+        let placement = Placement.PlaceBreadthFirst plan servers fake
         let fg = new FlatGraph(plan)
         let g = fg :> E2.IUndirectedGraph<IPlanVertex, IPlanEdgeTag>
         
@@ -74,7 +71,7 @@ type Placement() =
                             yield v1, v2
                 }
             
-            let IsInSamePartitions(v1, v2) = (dict.[v1] = dict.[v2])
+            let IsInSamePartitions(v1, v2) = (placement.[v1] = placement.[v2])
             
             // Assumption: v1 and v2 are not in the same partition
             let SwapGain(v1, v2) = 
@@ -119,9 +116,9 @@ type Placement() =
                 if Seq.isEmpty ps then ()
                 else 
                     let (v1, v2) = ps |> Seq.reduce MaxGain
-                    let temp = dict.[v1]
-                    dict.[v1] <- dict.[v2]
-                    dict.[v2] <- temp
+                    let temp = placement.[v1]
+                    placement.[v1] <- placement.[v2]
+                    placement.[v2] <- temp
             
             match n with
             | 0 -> ()
@@ -131,32 +128,39 @@ type Placement() =
                 |> Seq.filter (fun p -> (SwapGain p) > 0.0)
                 |> SwapBestPair
                 Iteration(n - 1)
-        Iteration 10
-        dict
+        Iteration 20
+        placement
     
-    static member Incremental(plan : IPlan, servers : IList<Server>, placement : IDictionary<IPlanVertex, Server>) = 
-        let dict = new Dictionary<IPlanVertex, Server>(placement)
-        
+    static member Incremental (plan : IPlan) (servers : IList<Server>) (placement : Dictionary<IPlanVertex, Server>) = 
+        let UsedCores = 
+            let d = Dictionary<Server, int>()
+            servers |> Seq.iter (fun s -> d.Add(s, 0))
+            d
         let PlaceVertex(v : IPlanVertex) = 
-            assert (v.State <> Placed)
+            assert (v.State = Unassigned)
             let Cost s = 
-                let e1 = plan.InEdges v |> Seq.filter (fun e -> dict.ContainsKey(e.Source) && dict.[e.Source] <> s)
-                let e2 = plan.OutEdges v |> Seq.filter (fun e -> dict.ContainsKey(e.Target) && dict.[e.Target] <> s)
+                let e1 = plan.InEdges v |> Seq.filter (fun e -> placement.ContainsKey(e.Source) && placement.[e.Source] <> s)
+                let e2 = plan.OutEdges v |> Seq.filter (fun e -> placement.ContainsKey(e.Target) && placement.[e.Target] <> s)
                 let edges = e1.Union(e2)
                 edges
                 |> Seq.map (fun e -> e.Tag.PacketsPerSecond)
                 |> Seq.sum
             
-            let candidates = servers |> Seq.filter (fun s -> s.AvailableCores >= 1.0)
+            let candidates = servers |> Seq.filter (fun s -> s.Cores.Count - UsedCores.[s] > 0)
             if Seq.isEmpty candidates then 
                 failwith "Not enough servers for placement."
             else 
                 let choice = 
                     candidates |> Seq.reduce (fun s1 s2 -> if Cost s1 <= Cost s2 then s1 else s2)
-                dict.Add(v, choice)
+                //printfn "Placed on server %d." choice.Id
+                v.State <- Assigned
+                placement.Add(v, choice)
+                UsedCores.[choice] <- UsedCores.[choice] + 1
+
         plan.Vertices
-        |> Seq.filter (fun v -> (v.State <> Placed))
+        |> Seq.filter (fun v -> (v.State = Unassigned))
         |> Seq.iter PlaceVertex
-        dict :> IDictionary<IPlanVertex, Server>
+        placement
     
-    static member Place (plan : IPlan) (servers : IList<Server>) = Placement.PlaceHeuristic plan servers
+    static member Place (plan : IPlan) (servers : IList<Server>) (fake : bool) = 
+        Placement.PlaceHeuristic plan servers fake

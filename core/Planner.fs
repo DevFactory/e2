@@ -1,7 +1,6 @@
 ﻿namespace E2
 
 type Planner = 
-    
     static member InitialPlan (policy : IPolicy) = 
         let p = new Plan()
         p.FromPolicyGraph(policy)
@@ -20,31 +19,27 @@ type Planner =
             let tag' = new PlanEdgeTag(e.Tag.Parent)
             let e' = new Edge<IPlanVertex, IPlanEdgeTag>(replica, target, tag')
             plan.AddEdge(e') |> ignore
-        replica
 
     static member ScaleDownPlanVertex (v : IPlanVertex) (policy : IPolicy) (plan: IPlan) =
         plan.RemoveVertex(v)
 
     static member Scale (policy : IPolicy) (plan : IPlan) = 
-        let PlanVertexLoad v = 
-            plan.InEdges v
-            |> Seq.map (fun e -> e.Tag.PacketsPerSecond)
-                            |> Seq.sum
-
+        let log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType)
         let PolicyVertexLoads pv = 
             plan.FindPlanVertices pv
-            |> Seq.map (fun v -> PlanVertexLoad v)
-                                            |> Seq.sum
+            |> Seq.map (fun v -> v.AggregatePacketsPerSeconds.FindMax())
+            |> Seq.sum
 
-        let Scale pv = 
+        let Scale (pv : IPolicyVertex) = 
             let totalLoad = PolicyVertexLoads pv
                 
             let replicaNumIdeal = 
-                totalLoad * pv.CyclesPerPacket / (2.6e+9)
-                |> ceil
-                |> int
-                
+                let ideal = totalLoad * pv.CyclesPerPacket / (2.6e+9 * 0.9) |> ceil
+                if ideal < 1.0 then 1 else int ideal
             let replicaNum = (plan.FindPlanVertices pv).Count
+
+            log.DebugFormat("Scaling policy vertex {0}. PPS: {1}. Ideal #: {2}. Current #: {3}", 
+                pv.Name, totalLoad, replicaNumIdeal, replicaNum)
                 
             let prevPlanVerticesWithPolicyTag = 
                 policy.Edges
@@ -66,34 +61,15 @@ type Planner =
                 plan.AddEdge(e)
                 
             // Scale up or down
-            if replicaNumIdeal > replicaNum then 
-                for i = 0 to replicaNumIdeal - replicaNum - 1 do
+            if replicaNumIdeal - replicaNum > 0 then 
+                for i = 0 to replicaNumIdeal - replicaNum (* intentionally +1 *) do
                     let replica = PlanVertex(pv)
                     plan.AddVertex replica |> ignore
                     prevPlanVerticesWithPolicyTag |> Seq.iter (fun (v, ptag) -> AddEdge v replica ptag |> ignore)
                     nextPlanVerticesWithPolicyTag |> Seq.iter (fun (v, ptag) -> AddEdge replica v ptag |> ignore)
-            else if replicaNumIdeal < replicaNum / 2 then
+            else if replicaNumIdeal - replicaNum < -2 then
                 let vs = plan.FindPlanVertices pv
-                let redundant = vs |> Seq.take (replicaNum - replicaNumIdeal)
-                redundant |> Seq.iter (fun v -> v.State <- Deleted)
+                let redundant = vs |> Seq.sortByDescending(fun v -> v.Id) |> Seq.take (replicaNum - replicaNumIdeal)
+                redundant |> Seq.iter (fun v -> v.State <- Obsolete)
 
-            // Manually rebalance load value to avoid repeated scaling.
-            // Ideally we should not do this, because it will be updated via notification.
-//            let BalancePolicyEdge(pe : IEdge<IPolicyVertex, IPolicyEdgeTag>) = 
-//                let totalLoad = 
-//                    plan.FindPlanEdgeTags(pe.Tag)
-//                    |> Seq.map (fun tag -> tag.PacketsPerSecond)
-//                    |> Seq.sum
-//                    
-//                let n = (plan.FindPlanVertices pe.Source).Count * (plan.FindPlanVertices pe.Target).Count
-//                let load = totalLoad / (float n)
-//                plan.FindPlanEdgeTags(pe.Tag) |> Seq.iter (fun tag -> tag.PacketsPerSecond <- load)
-//                
-//            // First rebalance loads coming from each of previous edges
-//            let prevPolicyEdges = policy.Edges |> Seq.filter (fun e -> e.Target = pv)
-//            prevPolicyEdges |> Seq.iter BalancePolicyEdge
-//            // Then rebalance loads to each of next edges
-//            let nextPolicyEdges = policy.Edges |> Seq.filter (fun e -> e.Source = pv)
-//            nextPolicyEdges |> Seq.iter BalancePolicyEdge
-            
         policy.Vertices |> Seq.iter Scale

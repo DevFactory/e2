@@ -12,7 +12,8 @@ type PlanVertex(parent : IPolicyVertex) =
     interface IPlanVertex with
         member val Id = Identifier.GetId()
         member val Parent = parent
-        member val State = New with get, set
+        member val State = Unassigned with get, set
+        member val AggregatePacketsPerSeconds = MovingMaximum<float>(5)
     override this.ToString() = "PlanVertex: " + (this :> IPlanVertex).Id.ToString() + " Hash: " + this.GetHashCode().ToString()
 
 type PlanEdgeTag(parent : IPolicyEdgeTag) = 
@@ -87,7 +88,7 @@ type Plan() =
             
             let OnFormatEdge(e : FormatEdgeEventArgs<IPlanVertex, TaggedEdge<IPlanVertex, IPlanEdgeTag>>) = 
                 let tag = e.Edge.Tag
-                e.EdgeFormatter.Label.Value <- tag.Parent.Filter + " - " + string tag.PacketsPerSecond
+                e.EdgeFormatter.Label.Value <- tag.Parent.Filter
             graphviz.FormatVertex.Add(OnFormatVertex)
             graphviz.FormatEdge.Add(OnFormatEdge)
             graphviz.Generate(new FileDotEngine(), "")

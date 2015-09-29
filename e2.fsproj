@@ -15,8 +15,8 @@
     <OtherFlags>--standalone</OtherFlags>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <Optimize>true</Optimize>
-    <Tailcalls>true</Tailcalls>
+    <Optimize>false</Optimize>
+    <Tailcalls>false</Tailcalls>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors />
     <DefineConstants>TRACE;DEBUG</DefineConstants>
@@ -43,6 +43,7 @@
   -->
   <ItemGroup>
     <Compile Include="core\Identifier.fs" />
+    <Compile Include="core\Util.fs" />
     <Compile Include="core/IGraph.fs" />
     <Compile Include="core/IResources.fs" />
     <Compile Include="core/IPlacement.fs" />
@@ -64,6 +65,10 @@
   <ItemGroup>
     <Reference Include="CookComputing.XmlRpcV2">
       <HintPath>packages\xmlrpcnet.2.5.0\lib\net20\CookComputing.XmlRpcV2.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="log4net">
+      <HintPath>packages\log4net.2.0.3\lib\net40-full\log4net.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="QuickGraph">

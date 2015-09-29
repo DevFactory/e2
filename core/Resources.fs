@@ -12,9 +12,10 @@ type Classifier() =
     inherit Module()
     member val Filters = List<string>()
 
-type LoadBalancer(isLastHop : bool) = 
+type LoadBalancer(isLastHop : bool, target : IPolicyVertex option) = 
     inherit Module()
     member val IsLastHop = isLastHop
+    member val Target = target with get, set
     member val ReplicaDMAC = List<PhysicalAddress>()
 
 type Switch() = 
@@ -44,11 +45,10 @@ type Server(totalCores : int, addr : string) =
     member val Id = Identifier.GetId()
     member val TotalCores = totalCores
     member val Address = addr
-    member val NF = List<IPlanVertex>()
     member val VPortIn = List<VPortIn>()
     member val VPortOut = List<VPortOut>()
     member val VPort = List<VPortStruct>()
-    member val FirstHopLB = LoadBalancer(false)
+    member val FirstHopLB = LoadBalancer(false, None)
     member val LB = List<LoadBalancer>()
     member val CL = List<Classifier>()
     member val PPortIn = PPortIn()
@@ -56,10 +56,11 @@ type Server(totalCores : int, addr : string) =
     member val PPort = PPortStruct()
     member val Switch = Switch()
     member val Channel = ServerChannel(addr, 5555)
-    member this.AvailableCores = float (this.TotalCores - this.NF.Count)
+    member val Cores = Queue<int>([1..totalCores])
+    member val NF = Dictionary<IPlanVertex, int>()
 
 type ToRSwitch(ingressPort: int list, ip : IPAddress) = 
-    member val L2 = Dictionary<PhysicalAddress, Server>()
+    member val L2 = List<PhysicalAddress * Server>()
     member val Port = Dictionary<Server, int>()
     member val Channel = SwitchChannel(IPEndPoint(ip, 2000))
     member val IngressPort = ingressPort

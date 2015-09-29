@@ -41,14 +41,16 @@ type IPolicyEdgeTag =
     abstract PipeletId : int
 
 type VertexState = 
-    | New
+    | Unassigned
+    | Assigned
     | Placed
-    | Deleted
+    | Obsolete
 
 type IPlanVertex = 
     abstract Id: int
     abstract Parent: IPolicyVertex
     abstract State: VertexState with get, set
+    abstract AggregatePacketsPerSeconds: MovingMaximum<float>
 
 type IPlanEdgeTag = 
     abstract Id: int
