@@ -7,10 +7,10 @@ let DownscaleThreshold = -5
 
 /// Scale the graph according to the rate numbers of instance edges
 /// Compute the optimal number of NF instances. 
-/// If current number exceeds the optimal, mark excess instances as "obsolete".
+/// If current number exceeds the optimal, mark excess instances as "Garbage".
 /// They will be recycled later.
 /// Otherwise, add more instances.
-let Scale (g : Graph) = 
+let Scale (g: Graph) = 
     let scaleNode (node : Node) = 
         let in_edges = g.InEdge node
         let edges = if Seq.isEmpty in_edges then g.OutEdge node else in_edges

@@ -101,7 +101,12 @@ type Orchestrator(conf : string) =
         state.Switch.L2.Add(i.GetAddress(), h)
     do state.Hosts |> Seq.iter (fun h -> h.VFI |> Seq.iter (fun i -> setup h i))
 
-    member this.ConfigHost(h: Host) = 
+    member this.InvokeHostFunctions(h: Host) = 
+        let functions = h.VFI |> Seq.filter (fun i -> i.Status = Assigned)
+        // TODO: Invoke functions
+        ()
+
+    member this.ConfigHostModules(h: Host) = 
         let rec configure (m: Module) = 
             match m with
             | :? ModuleClassifier -> ()

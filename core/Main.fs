@@ -4,6 +4,7 @@ open System
 open System.Collections.Generic
 open CookComputing.XmlRpc
 open log4net
+open Orchestrate
 
 let example = """
 vpn vpn0;
@@ -42,7 +43,7 @@ let LogConfig () =
 [<EntryPoint>]
 let main args = 
     LogConfig()
-    //let mgr = Orchestrator example
+    let mgr = Orchestrator example
     //mgr.InitServer()
     //mgr.Init()
     //mgr.Apply()

@@ -5,7 +5,7 @@ open Graph
 open Resources
 
 /// Places instances in the graph `g` onto a list of hosts.
-let Place (g : Graph) (hlist : List<Host>) = 
+let Place (g: Graph) (hlist: List<Host>) = 
     let instances = g.NodeInstances |> Seq.filter (fun i -> i.Status = Unassigned)
     let instance_edges = g.EdgeInstances
     
@@ -41,3 +41,7 @@ let Place (g : Graph) (hlist : List<Host>) =
 
     Seq.iter2 (fun (i: Instance) (h: Host) -> h.VFI.Add(i)) reordered_instances (Seq.take total_instances reordered_hosts)
     instances |> Seq.iter (fun i -> i.Status <- Assigned) 
+
+//let IncrementalPlace (g: Graph) (hlist: List<Host>) =
+//    let instances = g.NodeInstances |> Seq.filter (fun i -> i.Status = Unassigned)
+//    let instance_edges = g.EdgeInstances
