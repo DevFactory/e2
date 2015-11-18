@@ -42,9 +42,9 @@ let LogConfig () =
 [<EntryPoint>]
 let main args = 
     LogConfig()
-    let mgr = Orchestrator example
-    mgr.InitServer()
-    mgr.Init()
-    mgr.Apply()
-    mgr.Loop()
+    //let mgr = Orchestrator example
+    //mgr.InitServer()
+    //mgr.Init()
+    //mgr.Apply()
+    //mgr.Loop()
     0

@@ -44,20 +44,14 @@
   <ItemGroup>
     <Compile Include="core\Identifier.fs" />
     <Compile Include="core\Util.fs" />
-    <Compile Include="core/IGraph.fs" />
-    <Compile Include="core/IResources.fs" />
-    <Compile Include="core/IPlacement.fs" />
-    <Compile Include="core/Visualize.fs" />
     <Compile Include="core/Ast.fs" />
     <Compile Include="core/Parser.fs" />
     <Compile Include="core/Graph.fs" />
-    <Compile Include="core/Plan.fs" />
-    <Compile Include="core/Planner.fs" />
+    <Compile Include="core\Scale.fs" />
     <Compile Include="core\SwitchChannel.fs" />
     <Compile Include="core\ServerChannel.fs" />
     <Compile Include="core\Resources.fs" />
-    <Compile Include="core/Policy.fs" />
-    <Compile Include="core/Placement.fs" />
+    <Compile Include="core\Placement.fs" />
     <Compile Include="core\Orchestrate.fs" />
     <Compile Include="core/Main.fs" />
     <Content Include="packages.config" />
@@ -70,18 +64,6 @@
     <Reference Include="log4net">
       <HintPath>packages\log4net.2.0.3\lib\net40-full\log4net.dll</HintPath>
       <Private>True</Private>
-    </Reference>
-    <Reference Include="QuickGraph">
-      <HintPath>packages\QuickGraph\lib\net4\QuickGraph.dll</HintPath>
-    </Reference>
-    <Reference Include="QuickGraph.Data">
-      <HintPath>packages\QuickGraph\lib\net4\QuickGraph.Data.dll</HintPath>
-    </Reference>
-    <Reference Include="QuickGraph.Graphviz">
-      <HintPath>packages\QuickGraph\lib\net4\QuickGraph.Graphviz.dll</HintPath>
-    </Reference>
-    <Reference Include="QuickGraph.Serialization">
-      <HintPath>packages\QuickGraph\lib\net4\QuickGraph.Serialization.dll</HintPath>
     </Reference>
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Xml" />

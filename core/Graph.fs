@@ -1,51 +1,88 @@
-﻿namespace E2
+﻿module E2.Graph
 
-open QuickGraph
-open QuickGraph.Graphviz
-open QuickGraph.Serialization
-open QuickGraph.Algorithms
 open System
 open System.Collections.Generic
+open System.Net.NetworkInformation
 
-type Edge<'V, 'Tag>(source : 'V, target : 'V, tag : 'Tag) = 
-    interface IEdge<'V, 'Tag> with
-        member this.Tag = tag
-        member this.Source = source
-        member this.Target = target
+/// The possible status of an instance
+type InstanceStatus = 
+    | Unassigned
+    | Assigned
+    | Placed
+    | Garbage
 
-type FlatGraph(origin : E2.IGraph<IPlanVertex, IPlanEdgeTag>) = 
-    let mutable g = new UndirectedGraph<IPlanVertex, TaggedEdge<IPlanVertex, IPlanEdgeTag>>(false)
-    let TransformEdge(e : TaggedEdge<IPlanVertex, IPlanEdgeTag>) = 
-        new Edge<IPlanVertex, IPlanEdgeTag>(e.Source, e.Target, e.Tag) :> IEdge<IPlanVertex, IPlanEdgeTag>
-    let TransformIEdge(e : IEdge<IPlanVertex, IPlanEdgeTag>) = 
-        new TaggedEdge<IPlanVertex, IPlanEdgeTag>(e.Source, e.Target, e.Tag)
-    
-    do 
-        origin.Vertices
-        |> Seq.fold (fun r v -> r && g.AddVertex(v)) true
-        |> ignore
-        for v1 in origin.Vertices do
-            for v2 in origin.Vertices do
-                let edges = 
-                    origin.Edges 
-                    |> Seq.filter (fun e -> (e.Source = v1 && e.Target = v2) || (e.Target = v1 && e.Source = v1))
-                if not (Seq.isEmpty edges) then 
-                    let maxWeightEdge = 
-                        edges
-                        |> Seq.reduce (fun a b -> 
-                               if a.Tag.PacketsPerSecond >= b.Tag.PacketsPerSecond then a
-                               else b)
-                        |> TransformIEdge
-                    g.AddEdge(maxWeightEdge) |> ignore
-    
-    member this.ConnectedComponents(components : IDictionary<IPlanVertex, int>) = g.ConnectedComponents components
-    interface E2.IUndirectedGraph<IPlanVertex, IPlanEdgeTag> with
-        member this.Vertices = g.Vertices
-        member this.Edges = g.Edges |> Seq.map TransformEdge
-        member this.AddVertex v = g.AddVertex(v)
-        member this.AddEdge e = g.AddEdge(TransformIEdge e)
-        member this.AdjacentEdges v = g.AdjacentEdges(v) |> Seq.map TransformEdge
-        member this.GetEdges v1 v2 = 
-            g.AdjacentEdges(v1)
-            |> Seq.filter (fun v -> v.Target = v2 || v.Source = v2)
-            |> Seq.map TransformEdge
+type Instance(status: InstanceStatus) = 
+    member val Id = Identifier.GetId()
+    member val Status = status with get, set
+    member this.GetAddress () = 
+        PhysicalAddress.Parse("06" + this.Id.ToString("X10"))
+
+/// Edge that connects two instances
+type InstanceEdge(source: Instance, target: Instance, rate: float) =
+    member val Source = source
+    member val Target = target
+    member val Rate = rate with get, set
+
+type Node(nodeType: string, name: string) = 
+    member val Type = nodeType
+    member val Name = name
+    member val Instances = List<Instance>()
+    member this.MaxRatePerCore = 
+        match nodeType with
+        | _ -> 10.0
+
+type NodeEdge(source: Node, target: Node, pipelet: int) =
+    let instances = List<InstanceEdge>()
+    member val Source = source
+    member val Target = target
+    member val Pipelet = pipelet 
+    member this.Instances = 
+        instances
+    member this.Rate () = 
+        this.Instances |> Seq.sumBy (fun e -> e.Rate)
+    member this.UpdateInstances () = 
+        // Remove unused edges
+        let obsoleteFilter = 
+            fun (ie: InstanceEdge) -> not (Seq.contains ie.Source source.Instances && Seq.contains ie.Target target.Instances)
+        let obsoletePredicate = new Predicate<InstanceEdge>(obsoleteFilter)
+        instances.RemoveAll obsoletePredicate |> ignore
+        // Connect new node instances
+        for s in source.Instances do
+            for t in target.Instances do
+                let exists = Seq.exists (fun (ie: InstanceEdge) -> ie.Source = s && ie.Target = t) instances
+                if not exists then instances.Add(InstanceEdge(s, t, 0.0))
+
+/// Graph is a collection of nodes and edges
+type Graph() =
+    let nodes = List<Node>()
+    let edges = List<NodeEdge>()
+
+    member this.Nodes = nodes
+    member this.Edges = edges
+    member this.NodeInstances = nodes |> Seq.map (fun n -> n.Instances) |> Seq.concat
+    member this.EdgeInstances = edges |> Seq.map (fun n -> n.Instances) |> Seq.concat
+
+    member this.UpdateInstanceEdges() = 
+        edges |> Seq.iter (fun e -> e.UpdateInstances())
+
+    member this.LoadFromParseState (state: Parser.ParseState) =
+        nodes.Clear()
+        nodes.AddRange(state.V |> Map.toSeq |> Seq.map (fun (name, t) -> Node(t, name)))
+        edges.Clear()
+        let makeNodeEdgeList pipelet lst = 
+            lst |> Seq.map (fun (v1, v2, e1, e2) ->
+                let v1' = nodes |> Seq.filter(fun n -> v1 = n.Name) |> Seq.exactlyOne
+                let v2' = nodes |> Seq.filter(fun n -> v2 = n.Name) |> Seq.exactlyOne
+                NodeEdge(v1', v2', pipelet))
+        edges.AddRange(state.E |> Seq.mapi makeNodeEdgeList |> Seq.concat)
+        // init instances
+        nodes |> Seq.iter (fun n -> n.Instances.Add(Instance(Unassigned)))
+        this.UpdateInstanceEdges()
+
+    member this.InEdge (node: Node) = 
+        assert nodes.Contains(node)
+        edges |> Seq.filter (fun e -> e.Target = node)
+
+    member this.OutEdge (node: Node) = 
+        assert nodes.Contains(node)
+        edges |> Seq.filter (fun e -> e.Source = node)

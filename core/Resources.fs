@@ -1,66 +1,74 @@
-﻿namespace E2
+﻿module E2.Resources
 
 open System.Collections.Generic
 open System.Net.NetworkInformation
 open System.Net
+open Graph
 
 type Module() = 
     member val Id = Identifier.GetId()
     member val NextModules = List<Module>()
 
-type Classifier() = 
+type ModuleClassifier() = 
     inherit Module()
     member val Filters = List<string>()
 
-type LoadBalancer(isLastHop : bool, target : IPolicyVertex option) = 
+type ModuleLoadBalancer(isLastHop : bool) = 
     inherit Module()
     member val IsLastHop = isLastHop
-    member val Target = target with get, set
-    member val ReplicaDMAC = List<PhysicalAddress>()
+    member val Destinations = List<PhysicalAddress>()
 
-type Switch() = 
+type ModuleSwitch() = 
     inherit Module()
-    member val DMAC = List<PhysicalAddress>()
+    member val Entries = List<PhysicalAddress>()
 
-type VPortIn() = 
-    inherit Module()
-
-type VPortOut() = 
+type ModuleVPortInc() = 
     inherit Module()
 
-type VPortStruct(nf : IPlanVertex) = 
+type ModuleVPortOut() = 
+    inherit Module()
+
+type ModuleVPortStruct(nf : Instance) = 
     inherit Module()
     member val NF = nf
 
-type PPortIn() = 
+type ModulePPortInc() = 
     inherit Module()
 
-type PPortOut() = 
+type ModulePPortOut() = 
     inherit Module()
 
-type PPortStruct() = 
-    inherit Module()
+type HostSpec = {
+    Address: string;
+    Cores: int;
+    SwitchPort: int;
+}
 
-type Server(totalCores : int, addr : string) = 
-    member val Id = Identifier.GetId()
-    member val TotalCores = totalCores
-    member val Address = addr
-    member val VPortIn = List<VPortIn>()
-    member val VPortOut = List<VPortOut>()
-    member val VPort = List<VPortStruct>()
-    member val FirstHopLB = LoadBalancer(false, None)
-    member val LB = List<LoadBalancer>()
-    member val CL = List<Classifier>()
-    member val PPortIn = PPortIn()
-    member val PPortOut = PPortOut()
-    member val PPort = PPortStruct()
-    member val Switch = Switch()
-    member val Channel = ServerChannel(addr, 5555)
-    member val Cores = Queue<int>([1..totalCores])
-    member val NF = Dictionary<IPlanVertex, int>()
+type Host(spec: HostSpec) =
+    let pp_inc = ModulePPortInc()
+    let pp_out = ModulePPortOut()
+    let sw = ModuleSwitch()
+    let lb = ModuleLoadBalancer(false)
 
-type ToRSwitch(ingressPort: int list, ip : IPAddress) = 
-    member val L2 = List<PhysicalAddress * Server>()
-    member val Port = Dictionary<Server, int>()
+    do pp_inc.NextModules.Add(sw)
+    do sw.NextModules.Add(pp_out)
+    do sw.NextModules.Add(lb)
+
+    member val Channel = ServerChannel(spec.Address, 5555)
+
+    member val FreeCores = spec.Cores with get, set
+    member val VFI = List<Instance>() 
+    
+    member this.PPortInc = pp_inc
+    member this.PPortOut = pp_out
+    member this.Switch = sw
+    member this.LB = lb
+    
+    member val OptionalModules = List<Module>()
+    
+
+type Switch(ingressPort: int list, ip : IPAddress) = 
+    member val L2 = List<PhysicalAddress * Host>()
+    member val Port = Dictionary<Host, int>()
     member val Channel = SwitchChannel(IPEndPoint(ip, 2000))
     member val IngressPort = ingressPort
