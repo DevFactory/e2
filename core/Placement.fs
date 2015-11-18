@@ -42,6 +42,24 @@ let Place (g: Graph) (hlist: List<Host>) =
     Seq.iter2 (fun (i: Instance) (h: Host) -> h.VFI.Add(i)) reordered_instances (Seq.take total_instances reordered_hosts)
     instances |> Seq.iter (fun i -> i.Status <- Assigned) 
 
-//let IncrementalPlace (g: Graph) (hlist: List<Host>) =
-//    let instances = g.NodeInstances |> Seq.filter (fun i -> i.Status = Unassigned)
-//    let instance_edges = g.EdgeInstances
+let IncrementalPlace (g: Graph) (hlist: List<Host>) =
+    let instances = g.NodeInstances |> Seq.filter (fun i -> i.Status = Unassigned)
+    let instance_edges = g.EdgeInstances
+
+    let rate (i: Instance) (h: Host) = 
+        let out_rate = 
+            instance_edges 
+            |> Seq.filter (fun e -> e.Source = i && e.Target.Status <> Unassigned && not (h.VFI.Contains(e.Target))) 
+            |> Seq.sumBy (fun e -> e.Rate)
+        let in_rate = 
+            instance_edges 
+            |> Seq.filter (fun e -> e.Target = i && e.Source.Status <> Unassigned && not (h.VFI.Contains(e.Source))) 
+            |> Seq.sumBy (fun e -> e.Rate)
+        out_rate + in_rate
+    
+    let place (i: Instance) =
+        let h = hlist |> Seq.minBy (fun h -> rate i h)
+        h.VFI.Add(i)
+        i.Status <- Assigned
+
+    instances |> Seq.iter place
