@@ -4,7 +4,6 @@ open System
 open System.Collections.Generic
 open System.Net
 open System.Net.NetworkInformation
-open System.Threading
 open log4net
 
 open Graph
@@ -27,8 +26,6 @@ let handleSwitchResponse code =
     match code with
     | 0 -> ()
     | x -> failwith (sprintf "Error code: %d" x)
-
-let getDMACString(dmac : PhysicalAddress) = BitConverter.ToString(dmac.GetAddressBytes()).Replace('-', ':')
 
 type Orchestrator(conf : string) =
     let log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType)
@@ -82,7 +79,8 @@ type Orchestrator(conf : string) =
             cl.Filters.Add("true")
             cl.NextModules.Add(final_lb)
 
-            final_lb.NextModules.Add(h.Switch)
+            // Intentionally avoid cycles
+            // final_lb.NextModules.Add(h.Switch)
         else
             for e in next_edges do
                 let node' = e.Target
@@ -92,7 +90,8 @@ type Orchestrator(conf : string) =
                 cl.Filters.Add("true")
                 cl.NextModules.Add(lb)
 
-                lb.NextModules.Add(h.Switch)
+                // Intentionally avoid cycles
+                // lb.NextModules.Add(h.Switch)
                 lb.Destinations.AddRange(node'.Instances |> Seq.map (fun j -> j.GetAddress()))
 
         if Seq.isEmpty prev_edges then
@@ -102,9 +101,20 @@ type Orchestrator(conf : string) =
         state.Switch.L2.Add(i.GetAddress(), h)
     do state.Hosts |> Seq.iter (fun h -> h.VFI |> Seq.iter (fun i -> setup h i))
 
-    // TODO: Will refactor using BFS. The code should be much more succinct.
-    member this.ConfigHost() = 
-        ()
+    member this.ConfigHost(h: Host) = 
+        let rec configure (m: Module) = 
+            match m with
+            | :? ModuleClassifier -> ()
+            | :? ModuleLoadBalancer -> ()
+            | :? ModuleSwitch -> ()
+            | :? ModuleVPortInc -> ()
+            | :? ModuleVPortOut -> ()
+            | :? ModuleVPortStruct -> ()
+            | :? ModulePPortInc -> ()
+            | :? ModulePPortOut -> ()
+            | _ -> failwith "Unknown module type."
+            m.NextModules |> Seq.iter configure
+        configure h.PPortInc
     
     member this.ConfigSwitch() = 
         ()
