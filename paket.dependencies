@@ -1,4 +1,5 @@
 source https://nuget.org/api/v2
 
 nuget FParsec
-nuget QuickGraph
+nuget log4net
+nuget XmlRpcNet 3.0.0.266
