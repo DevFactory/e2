@@ -21,31 +21,7 @@ TC {
 
 """
 
-let LogConfig () =
-    let layout = Layout.PatternLayout(@"%date %-5level %logger: %message%newline")
-    let console = Appender.ConsoleAppender()
-    console.Layout <- layout
-    console.Threshold <- Core.Level.Info
-    
-    let file = Appender.RollingFileAppender()
-    file.Layout <- layout
-    file.Threshold <- Core.Level.Debug
-    file.File <- @"C:\Trace.log"
-    file.RollingStyle <- Appender.RollingFileAppender.RollingMode.Composite
-    file.MaxFileSize <- 100000000L
-    file.StaticLogFileName <- true
-    file.MaxSizeRollBackups <- 10
-    file.AppendToFile <- true
-    file.ActivateOptions()
-    
-    Config.BasicConfigurator.Configure(file, console) |> ignore
-
 [<EntryPoint>]
 let main args = 
-    LogConfig()
     let mgr = Orchestrator example
-    //mgr.InitServer()
-    //mgr.Init()
-    //mgr.Apply()
-    //mgr.Loop()
     0
