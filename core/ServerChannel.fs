@@ -1,7 +1,6 @@
 ﻿namespace E2
 
 open CookComputing.XmlRpc
-open System.Net
 open System
 
 type Cores = int array

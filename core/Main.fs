@@ -3,7 +3,6 @@ module E2.Main
 open System
 open System.Collections.Generic
 open CookComputing.XmlRpc
-open log4net
 open Orchestrate
 
 let example = """

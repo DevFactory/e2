@@ -4,7 +4,6 @@ open System
 open System.Collections.Generic
 open System.Net
 open System.Net.NetworkInformation
-open log4net
 
 open Graph
 open Placement
@@ -28,8 +27,6 @@ let handleSwitchResponse code =
     | x -> failwith (sprintf "Error code: %d" x)
 
 type Orchestrator(conf : string) =
-    let log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType)
-
     let state = { 
         Graph = Graph(); 
         Hosts = List<Host>();

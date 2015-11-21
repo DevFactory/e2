@@ -20,6 +20,15 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors />
     <DefineConstants>TRACE;DEBUG</DefineConstants>
+    <OutputPath>bin\</OutputPath>
+    <OtherFlags>--standalone</OtherFlags>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <OutputPath>bin\</OutputPath>
+    <Optimize>true</Optimize>
+    <Tailcalls>true</Tailcalls>
+    <OtherFlags>--standalone</OtherFlags>
   </PropertyGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '11.0'">
@@ -58,7 +67,7 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="CookComputing.XmlRpcV2">
-      <HintPath>packages\xmlrpcnet\lib\net20\CookComputing.XmlRpcV2.dll</HintPath>
+      <HintPath>packages\xmlrpcnet.2.5.0\lib\net20\CookComputing.XmlRpcV2.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="log4net">
