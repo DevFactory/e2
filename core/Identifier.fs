@@ -1,4 +1,4 @@
-﻿module Identifier
+﻿module E2.Identifier
 
 let internalId = ref 0
 

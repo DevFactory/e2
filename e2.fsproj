@@ -15,8 +15,8 @@
     <OtherFlags>--standalone</OtherFlags>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <Optimize>true</Optimize>
-    <Tailcalls>true</Tailcalls>
+    <Optimize>false</Optimize>
+    <Tailcalls>false</Tailcalls>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors />
     <DefineConstants>TRACE;DEBUG</DefineConstants>
@@ -43,41 +43,27 @@
   -->
   <ItemGroup>
     <Compile Include="core\Identifier.fs" />
-    <Compile Include="core/IGraph.fs" />
-    <Compile Include="core/IResources.fs" />
-    <Compile Include="core/IPlacement.fs" />
-    <Compile Include="core/Visualize.fs" />
+    <Compile Include="core\Util.fs" />
     <Compile Include="core/Ast.fs" />
     <Compile Include="core/Parser.fs" />
     <Compile Include="core/Graph.fs" />
-    <Compile Include="core/Plan.fs" />
-    <Compile Include="core/Planner.fs" />
+    <Compile Include="core\Scale.fs" />
     <Compile Include="core\SwitchChannel.fs" />
     <Compile Include="core\ServerChannel.fs" />
     <Compile Include="core\Resources.fs" />
-    <Compile Include="core/Policy.fs" />
-    <Compile Include="core/Placement.fs" />
+    <Compile Include="core\Placement.fs" />
     <Compile Include="core\Orchestrate.fs" />
     <Compile Include="core/Main.fs" />
     <Content Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="CookComputing.XmlRpcV2">
-      <HintPath Condition="Exists('packages\xmlrpcnet\lib\net20\CookComputing.XmlRpcV2.dll')">packages\xmlrpcnet\lib\net20\CookComputing.XmlRpcV2.dll</HintPath>
-      <HintPath Condition="Exists('packages\xmlrpcnet.2.5.0\lib\net20\CookComputing.XmlRpcV2.dll')">packages\xmlrpcnet.2.5.0\lib\net20\CookComputing.XmlRpcV2.dll</HintPath>
+      <HintPath>packages\xmlrpcnet\lib\net20\CookComputing.XmlRpcV2.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="QuickGraph">
-      <HintPath>packages\QuickGraph\lib\net4\QuickGraph.dll</HintPath>
-    </Reference>
-    <Reference Include="QuickGraph.Data">
-      <HintPath>packages\QuickGraph\lib\net4\QuickGraph.Data.dll</HintPath>
-    </Reference>
-    <Reference Include="QuickGraph.Graphviz">
-      <HintPath>packages\QuickGraph\lib\net4\QuickGraph.Graphviz.dll</HintPath>
-    </Reference>
-    <Reference Include="QuickGraph.Serialization">
-      <HintPath>packages\QuickGraph\lib\net4\QuickGraph.Serialization.dll</HintPath>
+    <Reference Include="log4net">
+      <HintPath>packages\log4net\lib\net40-full\log4net.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Xml" />
@@ -92,6 +78,20 @@
         </Reference>
         <Reference Include="FParsecCS">
           <HintPath>packages\FParsec\lib\net40-client\FParsecCS.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+    <When Condition="($(TargetFrameworkIdentifier) == 'WindowsPhoneApp') Or ($(TargetFrameworkIdentifier) == '.NETCore') Or ($(TargetFrameworkIdentifier) == 'WindowsPhone' And ($(TargetFrameworkVersion) == 'v8.0' Or $(TargetFrameworkVersion) == 'v8.1')) Or ($(TargetFrameworkProfile) == 'Profile7') Or ($(TargetFrameworkProfile) == 'Profile31') Or ($(TargetFrameworkProfile) == 'Profile32') Or ($(TargetFrameworkProfile) == 'Profile44') Or ($(TargetFrameworkProfile) == 'Profile49') Or ($(TargetFrameworkProfile) == 'Profile78') Or ($(TargetFrameworkProfile) == 'Profile84') Or ($(TargetFrameworkProfile) == 'Profile111') Or ($(TargetFrameworkProfile) == 'Profile151') Or ($(TargetFrameworkProfile) == 'Profile157') Or ($(TargetFrameworkProfile) == 'Profile259')">
+      <ItemGroup>
+        <Reference Include="FParsec">
+          <HintPath>packages\FParsec\lib\portable-net45+netcore45+wpa81+wp8\FParsec.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+        <Reference Include="FParsecCS">
+          <HintPath>packages\FParsec\lib\portable-net45+netcore45+wpa81+wp8\FParsecCS.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
