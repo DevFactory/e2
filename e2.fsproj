@@ -63,7 +63,8 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="CookComputing.XmlRpcV2">
-      <HintPath>packages\xmlrpcnet.2.5.0\lib\net20\CookComputing.XmlRpcV2.dll</HintPath>
+      <HintPath Condition="Exists('packages\xmlrpcnet\lib\net20\CookComputing.XmlRpcV2.dll')">packages\xmlrpcnet\lib\net20\CookComputing.XmlRpcV2.dll</HintPath>
+      <HintPath Condition="Exists('packages\xmlrpcnet.2.5.0\lib\net20\CookComputing.XmlRpcV2.dll')">packages\xmlrpcnet.2.5.0\lib\net20\CookComputing.XmlRpcV2.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="QuickGraph">

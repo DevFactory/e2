@@ -39,7 +39,7 @@ let ptoplevel = spaces >>. many (ptrafficclass <|> pnodedecl)
 let test p str fn = 
     match run p str with
     | Success(result, _, _) -> fn result
-    | Failure(errorMsg, _, _) -> failwith "Failure: %s" errorMsg
+    | Failure(errorMsg, _, _) -> failwith (sprintf "Failure: %s" errorMsg)
 
 type ParseState = 
     { V : Map<string, string>

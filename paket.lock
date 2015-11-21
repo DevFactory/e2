@@ -3,3 +3,4 @@ NUGET
   specs:
     FParsec (1.0.1)
     QuickGraph (3.6.61119.7)
+    xmlrpcnet (2.5.0)
