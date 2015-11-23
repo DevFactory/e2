@@ -1,9 +1,6 @@
 module E2.Main
 
-open System
-open System.Collections.Generic
-open CookComputing.XmlRpc
-open Orchestrate
+open E2.Orchestrate
 
 let example = """
 vpn vpn0;

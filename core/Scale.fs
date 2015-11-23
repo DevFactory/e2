@@ -20,8 +20,12 @@ let Scale (g: Graph) =
             |> Seq.concat 
             |> Seq.sumBy (fun e -> e.Rate)
 
-        let ideal_count = int (ceil (accum_rate / node.MaxRatePerCore))
+        let ideal_count = 
+            let n = int (ceil (accum_rate / node.MaxRatePerCore))
+            if n = 0 then 1 else n
+        
         let current_count = Seq.length node.Instances
+
         let gap = ideal_count - current_count
 
         if gap >= UpscaleThreshold then

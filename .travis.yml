@@ -1,2 +1,8 @@
 language: csharp
 solution: e2.sln
+install:
+  - nuget restore e2.sln
+  - nuget install NUnit.Runners -Version 3.0.0 -OutputDirectory testrunner
+script:
+  - xbuild /p:Configuration=Release e2.sln
+  - mono ./testrunner/NUnit.Runners.3.0.0/tools/nunit-console.exe ./bin/e2.exe
