@@ -63,9 +63,10 @@
     <Compile Include="core/Placement.fs" />
     <Compile Include="core/Orchestrate.fs" />
     <Compile Include="test/TestGraph.fs" />
-    <Compile Include="bessctl/Socket.fs" />
-    <Compile Include="bessctl/BessSer.fs" />
+    <Compile Include="bessprot/Socket.fs" />
+    <Compile Include="bessprot/BessSer.fs" />
     <Compile Include="bessctl/Bess.fs" />
+    <Compile Include="serveragent/Agent.fs" />
     <Compile Include="launcher/Main.fs" />
     <Content Include="packages.config" />
   </ItemGroup>
