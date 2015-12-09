@@ -54,6 +54,7 @@ type ServerAgent(address: IPAddress, port: int) =
     if result then () else failwith "Could not send request to BESS"
     receiveResponse()
 
+  new() = ServerAgent(default_address, default_port)
   /// LaunchNF arguments
   /// handle: A string that will be used henceforth to refer to this
   /// kind: NF type to launch
