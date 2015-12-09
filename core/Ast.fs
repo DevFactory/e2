@@ -1,4 +1,4 @@
-module E2.Ast
+module Ast
 
 type Type = string
 

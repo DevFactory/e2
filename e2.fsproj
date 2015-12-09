@@ -1,15 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{97f75abe-af45-473d-9ecd-fddfca5035f3}</ProjectGuid>
+    <ProjectGuid>{97F75ABE-AF45-473D-9ECD-FDDFCA5035F3}</ProjectGuid>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <TargetFrameworkProfile />
-    <NuGetPackageImportStamp>
-    </NuGetPackageImportStamp>
+    <NuGetPackageImportStamp></NuGetPackageImportStamp>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <OutputType>Exe</OutputType>
   </PropertyGroup>
   <PropertyGroup>
     <AssemblyName>e2</AssemblyName>
-    <Configuration>Release</Configuration>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <OutputPath>build</OutputPath>
     <IntermediateOutputPath>obj</IntermediateOutputPath>
     <OtherFlags>--standalone</OtherFlags>
@@ -18,17 +19,18 @@
     <Optimize>false</Optimize>
     <Tailcalls>false</Tailcalls>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <WarningsAsErrors />
+    <WarningsAsErrors></WarningsAsErrors>
     <DefineConstants>TRACE;DEBUG</DefineConstants>
     <OutputPath>bin\</OutputPath>
-    <OtherFlags>--standalone</OtherFlags>
+    <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
     <OutputPath>bin\</OutputPath>
     <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
-    <OtherFlags>--standalone</OtherFlags>
+    <DebugSymbols>true</DebugSymbols>
+    <DefineConstants></DefineConstants>
   </PropertyGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '11.0'">
@@ -51,36 +53,43 @@
   </Target>
   -->
   <ItemGroup>
-    <Compile Include="core/Identifier.fs" />
-    <Compile Include="core/Util.fs" />
-    <Compile Include="core/Ast.fs" />
-    <Compile Include="core/Parser.fs" />
-    <Compile Include="core/Graph.fs" />
-    <Compile Include="core/Scale.fs" />
-    <Compile Include="core/SwitchChannel.fs" />
-    <Compile Include="core/ServerChannel.fs" />
-    <Compile Include="core/Resources.fs" />
-    <Compile Include="core/Placement.fs" />
-    <Compile Include="core/Orchestrate.fs" />
-    <Compile Include="test/TestGraph.fs" />
-    <Compile Include="bessctl/Socket.fs" />
-    <Compile Include="bessctl/BessSer.fs" />
-    <Compile Include="bessctl/Bess.fs" />
-    <Compile Include="launcher/Main.fs" />
     <Content Include="packages.config" />
+    <Compile Include="bessctl\Socket.fs" />
+    <Compile Include="bessctl\BessSer.fs" />
+    <Compile Include="bessctl\Bess.fs" />
+    <Compile Include="core\Identifier.fs" />
+    <Compile Include="core\Ast.fs" />
+    <Compile Include="core\Parser.fs" />
+    <Compile Include="core\Graph.fs" />
+    <Compile Include="core\Scale.fs" />
+    <Compile Include="core\SwitchChannel.fs" />
+    <Compile Include="core\ServerChannel.fs" />
+    <Compile Include="core\modules\Module.fs" />
+    <Compile Include="core\modules\Classifier.fs" />
+    <Compile Include="core\modules\LoadBalancer.fs" />
+    <Compile Include="core\modules\Switch.fs" />
+    <Compile Include="core\modules\VPortInc.fs" />
+    <Compile Include="core\modules\VPortOut.fs" />
+    <Compile Include="core\modules\VPort.fs" />
+    <Compile Include="core\modules\PPortInc.fs" />
+    <Compile Include="core\modules\PPortOut.fs" />
+    <Compile Include="core\modules\PPort.fs" />
+    <Compile Include="core\Host.fs" />
+    <Compile Include="core\HardwareSwitch.fs" />
+    <Compile Include="core\Placement.fs" />
+    <Compile Include="core\Orchestrate.fs" />
+    <Compile Include="test\TestGraph.fs" />
+    <Compile Include="launcher\Main.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="CookComputing.XmlRpcV2">
       <HintPath>packages\xmlrpcnet.2.5.0\lib\net20\CookComputing.XmlRpcV2.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="log4net">
       <HintPath>packages\log4net.2.0.3\lib\net40-full\log4net.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="nunit.framework">
       <HintPath>packages\NUnit.3.0.0\lib\net40\nunit.framework.dll</HintPath>
-      <Private>True</Private>
     </Reference>
   </ItemGroup>
   <Choose>
@@ -113,4 +122,7 @@
       </ItemGroup>
     </When>
   </Choose>
+  <ItemGroup>
+    <Folder Include="core\modules\" />
+  </ItemGroup>
 </Project>

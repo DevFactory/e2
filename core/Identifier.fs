@@ -1,6 +1,6 @@
-﻿module E2.Identifier
+module Identifier
 
 let internalId = ref 0
 
-let GetId () = 
+let GetId () =
     System.Threading.Interlocked.Increment internalId

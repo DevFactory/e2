@@ -1,4 +1,4 @@
-﻿module E2.Orchestrate
+module Orchestrate
 
 open System
 open System.Collections.Generic
@@ -7,55 +7,45 @@ open System.Net.NetworkInformation
 
 open Graph
 open Placement
-open Resources
+open Module
+open Host
+open HardwareSwitch
 
 type State = {
     Graph: Graph;
     Hosts: List<Host>
-    Switch: Switch;
+    Switch: HardwareSwitch;
 }
 
-let handleResponse(resp : Response) = 
-    match resp.code with
-    | 0 -> ()
-    //| -1 -> () // Not Implemented
-    | _ -> failwith (sprintf "Error code: %d, Message: %s" resp.code resp.msg)
-    
-let handleSwitchResponse code = 
-    match code with
-    | 0 -> ()
-    | x -> failwith (sprintf "Error code: %d" x)
-
 type Orchestrator(conf : string) =
-    let state = { 
-        Graph = Graph(); 
+    let state = {
+        Graph = Graph();
         Hosts = List<Host>();
-        Switch = Switch([ 17; 18; 19; 20 ], IPAddress.Parse("127.0.0.1"))
+        Switch = HardwareSwitch([ 17; 18; 19; 20 ], IPAddress.Parse("127.0.0.1"))
     }
 
     // Initialize Graph
     do conf |> (Parser.Parse) |> (state.Graph.LoadFromParseState)
-    
+
     // Initialize Hosts
     let makeSpec addr cores port =
         { Address = addr; Cores = cores; SwitchPort = port }
     let specs = [
-        makeSpec "c34.millennium.berkeley.edu" 15 46;
-        makeSpec "c35.millennium.berkeley.edu" 15 46;
+        makeSpec (IPAddress.Parse("127.0.0.1")) 15 46;
     ]
 
     do specs |> Seq.iter (fun spec ->
         let h = Host(spec)
         state.Hosts.Add(h)
         state.Switch.Port.Add(h, spec.SwitchPort))
-    
+
     do Place state.Graph state.Hosts
 
     let setup (h: Host) (i: Instance) =
-        let inc = ModuleVPortInc()
-        let out = ModuleVPortOut()
-        let vp = ModuleVPortStruct(i)
-        let cl = ModuleClassifier()
+        let inc = VPortInc()
+        let out = VPortOut()
+        let vp = VPort(i)
+        let cl = Classifier()
         h.OptionalModules.AddRange([inc; out; vp; cl])
 
         h.Switch.NextModules.Add(out)
@@ -70,7 +60,7 @@ type Orchestrator(conf : string) =
         let prev_edges = state.Graph.InEdge node
 
         if Seq.isEmpty next_edges then
-            let final_lb = ModuleLoadBalancer(true)
+            let final_lb = LoadBalancer(true)
             h.OptionalModules.Add(final_lb)
 
             cl.Filters.Add("true")
@@ -81,7 +71,7 @@ type Orchestrator(conf : string) =
         else
             for e in next_edges do
                 let node' = e.Target
-                let lb = ModuleLoadBalancer(false)
+                let lb = LoadBalancer(false)
                 h.OptionalModules.Add(lb)
 
                 cl.Filters.Add("true")
@@ -98,31 +88,38 @@ type Orchestrator(conf : string) =
         state.Switch.L2.Add(i.GetAddress(), h)
     do state.Hosts |> Seq.iter (fun h -> h.VFI |> Seq.iter (fun i -> setup h i))
 
-    member this.InvokeHostFunctions(h: Host) = 
+    member this.InvokeNetworkFunctions(h: Host) =
         let functions = h.VFI |> Seq.filter (fun i -> i.Status = Assigned)
         // TODO: Invoke functions
         ()
 
-    member this.ConfigHostModules(h: Host) = 
-        let rec configure (m: Module) = 
+    member this.InitModules(h: Host) =
+        let ensure b = if not b then failwith "Operation failed."
+
+        let rec configure (m: Module) =
             match m with
-            | :? ModuleClassifier -> ()
-            | :? ModuleLoadBalancer -> ()
-            | :? ModuleSwitch -> ()
-            | :? ModuleVPortInc -> ()
-            | :? ModuleVPortOut -> ()
-            | :? ModuleVPortStruct -> ()
-            | :? ModulePPortInc -> ()
-            | :? ModulePPortOut -> ()
+            | :? Classifier -> ()
+            | :? LoadBalancer -> ()
+            | :? Switch -> ()
+            | :? VPortInc -> ()
+            | :? VPortOut -> ()
+            | :? VPort -> ()
+            | :? PPortInc -> ()
+            | :? PPortOut -> ()
+            | :? PPort -> ()
             | _ -> failwith "Unknown module type."
             m.NextModules |> Seq.iter configure
+
+        h.Bess.Connect() |> ensure
+        h.Bess.PauseAll() |> ignore // TODO: Shouldn't ignore return value?
+
         configure h.PPortInc
-    
-    member this.ConfigSwitch() = 
-        ()
-    
-    member this.MonitorHost(h: Host) = 
+
+    member this.ConfigSwitch() =
         ()
 
-    member this.Loop() = 
+    member this.MonitorHost(h: Host) =
+        ()
+
+    member this.Loop() =
         ()

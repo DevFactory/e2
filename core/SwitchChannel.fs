@@ -1,4 +1,4 @@
-﻿namespace E2
+module SwitchChannel
 
 open CookComputing.XmlRpc
 open System.Net
@@ -12,7 +12,7 @@ type Priority = int
 type Table =
     val mutable id : int
 
-type ISwitchNorthbound = 
+type ISwitchNorthbound =
     [<XmlRpcMethod("nb.ACLExpressions.getFirst")>]
     abstract ACLExpressionsGetFirst : unit -> int64
 
@@ -49,13 +49,13 @@ type ISwitchNorthbound =
     [<XmlRpcMethod("nb.ACLRules.delRow")>]
     abstract ACLRulesDelRow : int64 -> int
 
-type SwitchChannel (endpoint : IPEndPoint) = 
+type SwitchChannel (endpoint : IPEndPoint) =
     let proxy = XmlRpcProxyGen.Create<ISwitchNorthbound>()
     //do printfn "Connect to ToR switch: %A" endpoint
     do (proxy :?> IXmlRpcProxy).Url <- "http://" + endpoint.ToString() + "/RPC2"
 
     member this.Agent = proxy
-    member this.CleanTables () = 
+    member this.CleanTables () =
         let HandleResponse code =
             match code with
             | 0 -> ()

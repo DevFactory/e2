@@ -1,4 +1,4 @@
-﻿namespace E2
+module ServerChannel
 
 open CookComputing.XmlRpc
 open System
@@ -18,7 +18,7 @@ type ModuleConfig = string
 type GateIndex = int
 
 [<Struct>]
-type PortStat = 
+type PortStat =
     val mutable port : string
     val mutable out_mpps : float
     val mutable inc_mpps : float
@@ -33,7 +33,7 @@ type Response =
     //[<XmlRpcMissingMapping(MappingAction.Ignore)>]
     val mutable result : PortStat array
 
-type IServerAgent = 
+type IServerAgent =
     [<XmlRpcMethod("reset")>]
     abstract ResetSoftNIC : unit -> Response
 
@@ -45,43 +45,43 @@ type IServerAgent =
 
     [<XmlRpcMethod("launch_sn")>]
     abstract LaunchSoftNIC : Cores -> Response
-    
+
     [<XmlRpcMethod("stop_sn")>]
     abstract StopSoftNIC : unit -> Response
-    
+
     [<XmlRpcMethod("launch_nf")>]
     abstract LaunchNF : Cores * NFType * ModuleName * NFName -> Response
-    
+
     [<XmlRpcMethod("stop_nf")>]
     abstract StopNF : NFName -> Response
-    
+
     [<XmlRpcMethod("create_pport")>]
     abstract CreatePPort : ModuleName -> Response
-    
+
     [<XmlRpcMethod("create_vport")>]
     abstract CreateVPort : ModuleName -> Response
-    
+
     [<XmlRpcMethod("create_module")>]
     abstract CreateModule : ModuleType * ModuleName -> Response
 
     [<XmlRpcMethod("create_module_with_arg")>]
     abstract CreateModuleEx : ModuleType * ModuleName * Object * bool -> Response
-    
+
     [<XmlRpcMethod("destroy_module")>]
     abstract DestroyModule : ModuleName -> Response
 
     [<XmlRpcMethod("destroy_port")>]
     abstract DestroyPort : ModuleName -> Response
-    
+
     [<XmlRpcMethod("connect_module")>]
     abstract ConnectModule : ModuleName * GateIndex * ModuleName -> Response
-    
+
     [<XmlRpcMethod("disconnect_module")>]
     abstract DisconnectModule : ModuleName * GateIndex -> Response
-    
+
     [<XmlRpcMethod("configure_module")>]
     abstract ConfigureModule : ModuleName * ModuleConfig -> Response
-    
+
     [<XmlRpcMethod("query_vport_stats")>]
     abstract QueryVPortStats : unit -> Response
 
@@ -91,7 +91,7 @@ type IServerAgent =
     [<XmlRpcMethod("query_module")>]
     abstract QueryModule : ModuleName * Object -> Response
 
-type ServerChannel (addr : string, port : int) = 
+type ServerChannel (addr : string, port : int) =
     let proxy = XmlRpcProxyGen.Create<IServerAgent>()
     do (proxy :?> IXmlRpcProxy).Url <- "http://" + addr + ":" + port.ToString()
 

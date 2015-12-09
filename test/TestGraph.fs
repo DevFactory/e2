@@ -1,8 +1,8 @@
-﻿module E2.TestGraph
+module TestGraph
 
 open NUnit.Framework
-open E2.Graph
-open E2.Scale
+open Graph
+open Scale
 
 [<Test>]
 let Empty () =

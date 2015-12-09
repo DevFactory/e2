@@ -1,6 +1,6 @@
-module E2.Main
+module Main
 
-open E2.Orchestrate
+open Orchestrate
 
 let example = """
 vpn vpn0;
