@@ -32,10 +32,11 @@
     <DebugSymbols>true</DebugSymbols>
     <DefineConstants></DefineConstants>
   </PropertyGroup>
+
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '11.0'">
       <PropertyGroup>
-        <FSharpTargetsPath>$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets</FSharpTargetsPath>
+        <FSharpTargetsPath>$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\4.0\Framework\v4.0\Microsoft.FSharp.Targets</FSharpTargetsPath>
       </PropertyGroup>
     </When>
     <Otherwise>
@@ -44,6 +45,7 @@
       </PropertyGroup>
     </Otherwise>
   </Choose>
+  
   <Import Project="$(FSharpTargetsPath)" Condition="Exists('$(FSharpTargetsPath)')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
@@ -53,10 +55,10 @@
   </Target>
   -->
   <ItemGroup>
-    <Content Include="packages.config" />
-    <Compile Include="bessctl\Socket.fs" />
-    <Compile Include="bessctl\BessSer.fs" />
-    <Compile Include="bessctl\Bess.fs" />
+    <Compile Include="bessprot/Socket.fs" />
+    <Compile Include="bessprot/BessSer.fs" />
+    <Compile Include="bessctl/Bess.fs" />
+    <Compile Include="serveragent/Agent.fs" />
     <Compile Include="core\Identifier.fs" />
     <Compile Include="core\Ast.fs" />
     <Compile Include="core\Parser.fs" />
@@ -80,6 +82,7 @@
     <Compile Include="core\Orchestrate.fs" />
     <Compile Include="test\TestGraph.fs" />
     <Compile Include="launcher\Main.fs" />
+    <Content Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="CookComputing.XmlRpcV2">
@@ -122,7 +125,4 @@
       </ItemGroup>
     </When>
   </Choose>
-  <ItemGroup>
-    <Folder Include="core\modules\" />
-  </ItemGroup>
 </Project>
