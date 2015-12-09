@@ -99,7 +99,7 @@ let private encodeDouble (a: double) =
 let private encodeString (a: string) =
   (System.Text.Encoding.ASCII.GetBytes a 
   |> pad8Bytes 
-  |> encode StringType a.Length)
+  |> encode StringType (a.Length + 1))
   
 let private encodeBlob (a: byte array) =
   pad8Bytes a
