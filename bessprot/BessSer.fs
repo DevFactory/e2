@@ -34,7 +34,7 @@ let private find8BytePadding (length: int) =
 
 (* Pad by 8 bytes *)
 let private pad8Bytes (a: byte array) =
-  let p = find8BytePadding(a.Length + 1) + 1
+  let p = find8BytePadding(a.Length)
   Array.append a (Array.zeroCreate p)
 
 (* Some active patterns *)
@@ -97,7 +97,8 @@ let private encodeDouble (a: double) =
   encode DoubleType DoubleLength (System.BitConverter.GetBytes a)
 
 let private encodeString (a: string) =
-  (System.Text.Encoding.ASCII.GetBytes a 
+  let bytes = System.Text.Encoding.ASCII.GetBytes a
+  (Array.append bytes (Array.zeroCreate 1)
   |> pad8Bytes 
   |> encode StringType (a.Length + 1))
   
