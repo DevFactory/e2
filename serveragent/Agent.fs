@@ -9,23 +9,23 @@ let default_port = 10516
 let default_address = IPAddress.Parse("127.0.0.1")
 
 [<BessMessage>]
-type private ServerAgentRequest(cmd: string, parameters: obj) =
+type public ServerAgentRequest(cmd: string, parameters: obj) =
   let _cmd = cmd
   let _parameters = parameters
   member this.Cmd with get() = _cmd
   member this.Parameters with get() = _parameters
 
 [<BessMessage>]
-type private LaunchNF(handle: string, kind: string, vport: string) =
+type public LaunchNF(handle: string, kind: string, vport: string) =
   let _handle = handle
   let _kind = kind
   let _vport = vport
-  member this.Handle with get() = _handle
-  member this.Kind with get() = _kind
-  member this.Vport with get() = _vport
+  member public this.Handle with get() = _handle
+  member public this.Kind with get() = _kind
+  member public this.Vport with get() = _vport
 
 [<BessMessage>]
-type private StopNF(handle: string, delVport: int) =
+type public StopNF(handle: string, delVport: int) =
   let _handle = handle
   let _delVport = delVport
   member this.Handle with get() = _handle
@@ -55,6 +55,10 @@ type ServerAgent(address: IPAddress, port: int) =
     receiveResponse()
 
   new() = ServerAgent(default_address, default_port)
+
+  member this.Connect () =
+    socket.ConnectSynchronously(address, port)
+
   /// LaunchNF arguments
   /// handle: A string that will be used henceforth to refer to this
   /// kind: NF type to launch
