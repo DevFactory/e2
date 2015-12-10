@@ -25,11 +25,11 @@ type public LaunchNF(handle: string, kind: string, vport: string) =
   member public this.Vport with get() = _vport
 
 [<BessMessage>]
-type public StopNF(handle: string, delVport: int) =
+type public StopNF(handle: string, delVport: int64) =
   let _handle = handle
   let _delVport = delVport
   member this.Handle with get() = _handle
-  member this.DelVPort with get() = _handle
+  member this.DelVPort with get() = _delVport
 
 // Add messages for listing resources etc.
 type ServerAgent(address: IPAddress, port: int) =
@@ -39,18 +39,19 @@ type ServerAgent(address: IPAddress, port: int) =
 
   let receiveResponse() =
     let lenBa : (byte array) = Array.zeroCreate 4
-    if (socket.ReceiveSynchronously lenBa) then () 
+    if (socket.ReceiveSynchronously lenBa) then ()
     else failwith "Could not receive"
     let len = ReadLength lenBa
     let ba : (byte array) = Array.zeroCreate len
-    if (socket.ReceiveSynchronously ba) then () 
+    if (socket.ReceiveSynchronously ba) then ()
     else failwith "Could not receive"
     let result = Decode ba
     result
 
   let request (cmd: string) (args: obj) =
     let request = new ServerAgentRequest(cmd, args)
-    let result = (Encode request) |> socket.SendSynchronously
+    let encoded= (Encode request)
+    let result = socket.SendSynchronously encoded
     if result then () else failwith "Could not send request to BESS"
     receiveResponse()
 
@@ -65,21 +66,21 @@ type ServerAgent(address: IPAddress, port: int) =
   /// vport: VPort to connect NF
   member this.LaunchNF (handle: string, kind: string, vport: string) =
     request "launch" (new LaunchNF(handle, kind, vport))
-  
+
   /// StopNF: This "stops" the NF (marks it for eventual garbage collection)
   /// handle: NF handle
   /// keepVport: Should the vport be kept (i.e., not deleted) after NF is
   /// shutdown. This is false by default
   member this.StopNF (handle: string, ?keepVport: bool) =
     let delVport = match keepVport with
-                   | Some(true) -> 0
-                   | Some(false) -> 1
-                   | None -> 1
+                   | Some(true) -> 0L
+                   | Some(false) -> 1L
+                   | None -> 1L
     request "stop" (new StopNF(handle, delVport))
-  
+ 
   member this.ReportPerf (handle: string) =
     request "perf" (box handle)
-  
+ 
   /// ListRunning: List all currently running NFs (this includes NFs marked for
   /// destruction which haven't yet been destroyed
   member this.ListRunning (?kind: string) =
@@ -87,7 +88,7 @@ type ServerAgent(address: IPAddress, port: int) =
               | Some(k) -> (box k)
               | None -> null
     request "list_running" arg
-  
+ 
   /// ListMarked: List all currently running NFs that have been marked for
   /// destruction.
   member this.ListMarked (?kind: string) =
@@ -99,7 +100,7 @@ type ServerAgent(address: IPAddress, port: int) =
   /// StartBess: Start Bess.
   member this.StartBess() =
     request "start_bess" null
-  
+ 
   /// StopBess: Stop Bess.
   member this.StopBess() =
     request "stop_bess" null

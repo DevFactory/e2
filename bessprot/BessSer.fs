@@ -124,7 +124,7 @@ and private encodeList (a: System.Collections.IEnumerable) =
   |> Array.concat
   |> encode ListType (Seq.length asSeq)
 and private strBytes (s:string) = 
-  System.Text.Encoding.ASCII.GetBytes s
+  Array.append (System.Text.Encoding.ASCII.GetBytes s) (Array.zeroCreate 1)
   |> pad8Bytes
 and private encodeMap (a: System.Collections.IDictionary) =
   let kseq = a.Keys |> Seq.cast<string>
