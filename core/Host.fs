@@ -14,25 +14,33 @@ type HostSpec = {
 }
 
 type Host(spec: HostSpec) =
-    let pp_inc = PPortInc()
-    let pp_out = PPortOut()
-    let sw = Switch()
+    let inc = PPortInc()
+    let out = PPortOut()
+    let port = PPort()
+    let switch = Switch()
     let lb = LoadBalancer(false)
+    let affinity = AffinityTracker()
+    let mux = Mux()
 
-    do pp_inc.NextModules.Add(sw)
-    do sw.NextModules.Add(pp_out)
-    do sw.NextModules.Add(lb)
+    do port.NextModules.Add(inc)
+    do inc.NextModules.Add(mux)
+    do mux.NextModules.Add(switch)
+    do mux.NextModules.Add(lb)
+    do switch.NextModules.Add(out)
+    do out.NextModules.Add(port)
 
-    // member val Channel = ServerChannel(spec.Address, 5555)
     member val Bess = Bess(spec.Address, 10514)
 
     member val FreeCores = spec.Cores with get, set
     member val VFI = List<Instance>() 
-    
-    member this.PPortInc = pp_inc
-    member this.PPortOut = pp_out
-    member this.Switch = sw
+
+    member this.PPort = port
+    member this.PPortInc = inc
+    member this.PPortOut = out
+    member this.Switch = switch
     member this.LB = lb
+    member this.AffinityTracker = affinity
+    member this.Mux = mux
     
     member val OptionalModules = List<Module>()
     

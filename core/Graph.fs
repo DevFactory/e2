@@ -9,7 +9,7 @@ open Parser
 type InstanceStatus =
     | Unassigned
     | Assigned
-    | Placed
+    | Running
     | Garbage
 
 type Instance(status: InstanceStatus) =
@@ -87,3 +87,12 @@ type Graph() =
     member this.OutEdge (node: Node) =
         assert nodes.Contains(node)
         edges |> Seq.filter (fun e -> e.Source = node)
+
+    member this.InInstanceEdge (instance: Instance) = 
+        assert Seq.contains instance this.NodeInstances
+        this.EdgeInstances |> Seq.filter (fun e -> e.Target = instance)
+
+    member this.OutInstanceEdge (instance: Instance) = 
+        assert Seq.contains instance this.NodeInstances
+        this.EdgeInstances |> Seq.filter (fun e -> e.Source = instance)
+

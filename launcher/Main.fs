@@ -20,4 +20,5 @@ TC {
 [<EntryPoint>]
 let main args = 
     let mgr = Orchestrator example
+    mgr.Run()
     0

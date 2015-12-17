@@ -4,7 +4,8 @@
     <ProjectGuid>{97F75ABE-AF45-473D-9ECD-FDDFCA5035F3}</ProjectGuid>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <TargetFrameworkProfile />
-    <NuGetPackageImportStamp></NuGetPackageImportStamp>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <OutputType>Exe</OutputType>
   </PropertyGroup>
@@ -19,7 +20,8 @@
     <Optimize>false</Optimize>
     <Tailcalls>false</Tailcalls>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <WarningsAsErrors></WarningsAsErrors>
+    <WarningsAsErrors>
+    </WarningsAsErrors>
     <DefineConstants>TRACE;DEBUG</DefineConstants>
     <OutputPath>bin\</OutputPath>
     <DebugSymbols>true</DebugSymbols>
@@ -30,9 +32,9 @@
     <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
     <DebugSymbols>true</DebugSymbols>
-    <DefineConstants></DefineConstants>
+    <DefineConstants>
+    </DefineConstants>
   </PropertyGroup>
-
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '11.0'">
       <PropertyGroup>
@@ -45,7 +47,6 @@
       </PropertyGroup>
     </Otherwise>
   </Choose>
-  
   <Import Project="$(FSharpTargetsPath)" Condition="Exists('$(FSharpTargetsPath)')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
@@ -55,10 +56,10 @@
   </Target>
   -->
   <ItemGroup>
-    <Compile Include="bessprot/Socket.fs" />
-    <Compile Include="bessprot/BessSer.fs" />
-    <Compile Include="bessctl/Bess.fs" />
-    <Compile Include="serveragent/Agent.fs" />
+    <Compile Include="bessprot\Socket.fs" />
+    <Compile Include="bessprot\BessSer.fs" />
+    <Compile Include="bessctl\Bess.fs" />
+    <Compile Include="serveragent\Agent.fs" />
     <Compile Include="core\Identifier.fs" />
     <Compile Include="core\Ast.fs" />
     <Compile Include="core\Parser.fs" />
@@ -76,6 +77,8 @@
     <Compile Include="core\modules\PPortInc.fs" />
     <Compile Include="core\modules\PPortOut.fs" />
     <Compile Include="core\modules\PPort.fs" />
+    <Compile Include="core\modules\Mux.fs" />
+    <Compile Include="core\modules\AffinityTracker.fs" />
     <Compile Include="core\Host.fs" />
     <Compile Include="core\HardwareSwitch.fs" />
     <Compile Include="core\Placement.fs" />
