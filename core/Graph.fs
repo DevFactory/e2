@@ -12,35 +12,46 @@ type InstanceStatus =
     | Running
     | Garbage
 
-type Instance(status: InstanceStatus) =
+type Instance(status: InstanceStatus, parent: Node) =
     member val Id = Identifier.GetId()
     member val Status = status with get, set
+    member val Parent = parent
     member this.GetAddress () =
         PhysicalAddress.Parse("06" + this.Id.ToString("X10"))
 
-/// Edge that connects two instances
-type InstanceEdge(source: Instance, target: Instance, rate: float) =
-    member val Source = source
-    member val Target = target
-    member val Rate = rate with get, set
-
-type Node(nodeType: string, name: string) =
+and Node(nodeType: string, name: string) =
     member val Type = nodeType
     member val Name = name
     member val Instances = List<Instance>()
+
     member this.MaxRatePerCore =
         match nodeType with
         | _ -> 10.0
+    
+    member this.Cores = 
+        match nodeType with
+        | _ -> 1.0
 
-type NodeEdge(source: Node, target: Node, pipelet: int) =
+
+/// Edge that connects two instances
+type InstanceEdge(source: Instance, target: Instance, rate: float, parent: NodeEdge) =
+    member val Source = source
+    member val Target = target
+    member val Rate = rate with get, set
+    member val Parent = parent
+
+and NodeEdge(source: Node, target: Node, pipelet: int) =
     let instances = List<InstanceEdge>()
     member val Source = source
     member val Target = target
     member val Pipelet = pipelet
+
     member this.Instances =
         instances
+
     member this.Rate () =
         this.Instances |> Seq.sumBy (fun e -> e.Rate)
+
     member this.UpdateInstances () =
         // Remove unused edges
         let obsoleteFilter =
@@ -51,7 +62,7 @@ type NodeEdge(source: Node, target: Node, pipelet: int) =
         for s in source.Instances do
             for t in target.Instances do
                 let exists = Seq.exists (fun (ie: InstanceEdge) -> ie.Source = s && ie.Target = t) instances
-                if not exists then instances.Add(InstanceEdge(s, t, 0.0))
+                if not exists then instances.Add(InstanceEdge(s, t, 0.0, this))
 
 /// Graph is a collection of nodes and edges
 type Graph() =
@@ -77,7 +88,7 @@ type Graph() =
                 NodeEdge(v1', v2', pipelet))
         edges.AddRange(state.E |> Seq.mapi makeNodeEdgeList |> Seq.concat)
         // init instances
-        nodes |> Seq.iter (fun n -> n.Instances.Add(Instance(Unassigned)))
+        nodes |> Seq.iter (fun n -> n.Instances.Add(Instance(Unassigned, n)))
         this.UpdateInstanceEdges()
 
     member this.InEdge (node: Node) =

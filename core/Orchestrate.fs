@@ -33,7 +33,7 @@ type Orchestrator(conf : string) =
         { Address = addr; Cores = cores; SwitchPort = port }
 
     let specs = [
-        makeSpec (IPAddress.Parse("127.0.0.1")) 15 46;
+        makeSpec (IPAddress.Parse("127.0.0.1")) 15.0 46;
     ]
 
     do specs |> Seq.iter (fun spec ->

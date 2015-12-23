@@ -9,7 +9,7 @@ open Module
 
 type HostSpec = {
     Address: IPAddress;
-    Cores: int;
+    Cores: float;
     SwitchPort: int;
 }
 
@@ -31,8 +31,11 @@ type Host(spec: HostSpec) =
 
     member val Bess = Bess(spec.Address, 10514)
 
-    member val FreeCores = spec.Cores with get, set
-    member val VFI = List<Instance>() 
+    member val VFI = List<Instance>()
+
+    member this.FreeCores() = 
+        let used = this.VFI |> Seq.map (fun i -> i.Parent.Cores) |> Seq.sum
+        spec.Cores - used
 
     member this.PPort = port
     member this.PPortInc = inc

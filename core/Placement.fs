@@ -4,6 +4,9 @@ open System.Collections.Generic
 open Graph
 open Host
 
+let IsFeasible (instance: Instance) (host: Host) = 
+    instance.Parent.Cores <= host.FreeCores()
+
 /// Places instances in the graph `g` onto a list of hosts.
 let Place (g: Graph) (hlist: List<Host>) =
     let instances = g.NodeInstances |> Seq.filter (fun i -> i.Status = Unassigned)
@@ -32,15 +35,16 @@ let Place (g: Graph) (hlist: List<Host>) =
             neighbors |> Seq.iter (q.Enqueue)
             neighbors |> Seq.iter (discovered.Add >> ignore)
 
-    let reordered_hosts = hlist |> Seq.map (fun h -> Seq.replicate h.FreeCores h) |> Seq.concat
+    let mutable host_index = 0
 
-    let total_cores = Seq.length reordered_hosts
-    let total_instances = Seq.length reordered_instances
-    if total_cores < total_instances then
-        failwith "Not enough cores for allocation."
-
-    Seq.iter2 (fun (i: Instance) (h: Host) -> h.VFI.Add(i)) reordered_instances (Seq.take total_instances reordered_hosts)
-    instances |> Seq.iter (fun i -> i.Status <- Assigned)
+    for instance in reordered_instances do
+        while host_index < hlist.Count && not (IsFeasible instance hlist.[host_index]) do
+            host_index <- host_index + 1
+        if host_index < hlist.Count then
+            hlist.[host_index].VFI.Add(instance)
+            instance.Status <- Assigned
+        else
+            failwith "Not enough cores for allocation."
 
 let IncrementalPlace (g: Graph) (hlist: List<Host>) =
     let instances = g.NodeInstances |> Seq.filter (fun i -> i.Status = Unassigned)
@@ -58,7 +62,8 @@ let IncrementalPlace (g: Graph) (hlist: List<Host>) =
         out_rate + in_rate
 
     let place (i: Instance) =
-        let h = hlist |> Seq.minBy (fun h -> rate i h)
+        let candidate = hlist |> Seq.filter (fun h -> IsFeasible i h)
+        let h = candidate |> Seq.minBy (fun h -> rate i h)
         h.VFI.Add(i)
         i.Status <- Assigned
 

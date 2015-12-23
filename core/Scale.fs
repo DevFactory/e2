@@ -30,7 +30,7 @@ let Scale (g: Graph) =
 
         if gap >= UpscaleThreshold then
             for i in 1..gap do
-                node.Instances.Add(Instance(Unassigned))
+                node.Instances.Add(Instance(Unassigned, node))
         else if gap <= DownscaleThreshold then
             for i in 1..(-gap) do
                 node.Instances.[current_count - i].Status <- Garbage
