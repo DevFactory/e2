@@ -11,6 +11,8 @@ message Command {
 		NewInstance = 6;
 		KillInstance = 7;
 		MachineStatusString = 8;
+		RegisterForNotification = 9;
+		UnregisterFromNotification = 10;
 	}
 	extensions 10 to max;
 	required Commands command= 1;
@@ -94,3 +96,14 @@ message MachineStatusString {
 	}
 }
 
+message RegisterForNotification {
+	extend Command {
+		optional RegisterForNotification args = 18;
+	}
+}
+
+message UnregisterFromNotification {
+	extend Command {
+		optional UnregisterFromNotification args = 19;
+	}
+}
