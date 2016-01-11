@@ -7,6 +7,9 @@ import edu.berkeley.span.Request.Command;
 import edu.berkeley.span.Request.Command.Builder;
 import edu.berkeley.span.Resp;
 import edu.berkeley.span.Resp.Response;
+import edu.berkeley.span.Notification;
+import edu.berkeley.span.Notification.Upcall;
+import edu.berkeley.span.NotificationAgent;
 public final class SerializeDeserialize {
 	private ExtensionRegistry _registry;
 	public SerializeDeserialize() {
@@ -78,6 +81,25 @@ public final class SerializeDeserialize {
 		return cbuild.build();
 	}
 
+	public Command TriggerNotification(NotificationAgent.NotificationType type,
+			String pipeletId,
+			String nfId) {
+		TriggerNotification.Type pbType;
+		if (type == NotificationAgent.NotificationType.Overload) {
+			pbType = TriggerNotification.Type.Overload;
+		} else {
+			pbType = TriggerNotification.Type.Underload;
+		}
+		Command.Builder cbuild = Command.newBuilder();
+		cbuild.setCommand(Command.Commands.TriggerNotification);
+		cbuild.setExtension(TriggerNotification.args,
+				TriggerNotification.newBuilder()
+				.setType(pbType)
+				.setPipeletId(pipeletId)
+				.setNfId(nfId).build());
+		return cbuild.build();
+	}
+
 	public Command RegisterForNotification() {
 		Command.Builder cbuild = Command.newBuilder();
 		cbuild.setCommand(Command.Commands.RegisterForNotification);
@@ -96,5 +118,9 @@ public final class SerializeDeserialize {
 
 	public Response ParseResponse(byte[] array, int len) throws InvalidProtocolBufferException {
 		return Response.PARSER.parseFrom(array, 0, len, _registry); 
+	}
+
+	public Upcall ParseNotification(byte[] array, int len) throws InvalidProtocolBufferException {
+		return Upcall.PARSER.parseFrom(array, 0, len, _registry); 
 	}
 }

@@ -1,0 +1,12 @@
+package E2;
+option java_package = "edu.berkeley.span";
+
+message Upcall {
+	enum Type {
+		Overload = 1;
+		Underload = 2;
+	}
+	required Type type = 1;
+	required string pipelet_id = 2;
+	required string nf_id = 3;
+}

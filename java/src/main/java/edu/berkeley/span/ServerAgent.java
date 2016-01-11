@@ -52,4 +52,11 @@ class ServerAgent {
 		_channel.SendCommand(_serde.StopBess());
 		_channel.GetResponse();
 	}
+
+	public void TriggerNotification(NotificationAgent.NotificationType type,
+			String pipeletId,
+			String nfId) throws IOException, ServerAgentException {
+		_channel.SendCommand(_serde.TriggerNotification(type, pipeletId, nfId));
+		_channel.GetResponse();
+	}
 }

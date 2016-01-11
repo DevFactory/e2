@@ -13,6 +13,7 @@ message Command {
 		MachineStatusString = 8;
 		RegisterForNotification = 9;
 		UnregisterFromNotification = 10;
+		TriggerNotification = 11;
 	}
 	extensions 10 to max;
 	required Commands command= 1;
@@ -106,4 +107,19 @@ message UnregisterFromNotification {
 	extend Command {
 		optional UnregisterFromNotification args = 19;
 	}
+}
+
+message TriggerNotification {
+	extend Command {
+		optional TriggerNotification args = 20;
+	}
+
+	enum Type {
+		Overload = 1;
+		Underload = 2;
+	}
+
+	required Type type = 1;
+	required string pipelet_id = 2;
+	required string nf_id = 3;
 }

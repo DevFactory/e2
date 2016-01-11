@@ -16,9 +16,9 @@ class ServerAgentChannel {
 	private ByteBuffer _lenBuf;
 	private ByteBuffer _respBuf;
 
-	public ServerAgentChannel(String address, int port, SerializeDeserialize serde, 
+	public ServerAgentChannel(String address, int port, SerializeDeserialize serde,
 			SocketChannel conn) throws IOException {
-		_serde = _serde;
+		_serde = serde;
 		_address = new InetSocketAddress(address, port);
 		_conn = conn;
 		_conn.connect(_address);
@@ -40,6 +40,7 @@ class ServerAgentChannel {
 		while (_lenBuf.hasRemaining()) {
 			_conn.write(_lenBuf);
 		}
+		System.out.println("Should send " + len + " bytes");
 		ByteBuffer obj = ByteBuffer.wrap(serialized);
 		while (obj.hasRemaining()) {
 			_conn.write(obj);
