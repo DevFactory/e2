@@ -1,6 +1,8 @@
 package edu.berkeley.span;
 import com.google.protobuf.ExtensionRegistry;
 import com.google.protobuf.InvalidProtocolBufferException;
+import edu.berkeley.span.Vertex;
+import edu.berkeley.span.Edge;
 import edu.berkeley.span.Request;
 import edu.berkeley.span.Request.*;
 import edu.berkeley.span.Request.Command;
@@ -10,6 +12,8 @@ import edu.berkeley.span.Resp.Response;
 import edu.berkeley.span.Notification;
 import edu.berkeley.span.Notification.Upcall;
 import edu.berkeley.span.NotificationAgent;
+import java.util.HashMap;
+import java.util.List;
 public final class SerializeDeserialize {
 	private ExtensionRegistry _registry;
 	public SerializeDeserialize() {
@@ -78,6 +82,45 @@ public final class SerializeDeserialize {
 				NewInstance.newBuilder()
 				.setType(type)
 				.setInstanceId(id).build());
+		return cbuild.build();
+	}
+
+	public Command KillInstance(String id) {
+		Command.Builder cbuild = Command.newBuilder();
+		cbuild.setCommand(Command.Commands.KillInstance);
+		cbuild.setExtension(KillInstance.args,
+				KillInstance.newBuilder()
+				.setInstanceId(id).build());
+		return cbuild.build();
+	}
+
+	public Command NewPipelet(String type, HashMap<String, String> nfs, List<Edge> connections,
+			HashMap<Edge, String> ifilters, String efilter) {
+		Command.Builder cbuild = Command.newBuilder();
+		cbuild.setCommand(Command.Commands.NewPipelet);
+		NewPipelet.Builder abuild = NewPipelet.newBuilder();
+		abuild.setType(type);
+		nfs.forEach((k, v) -> {
+			abuild.addNfs(NewPipelet.NF.newBuilder()
+					.setId(k)
+					.setType(v).build());
+		});
+		connections.forEach(e -> {
+			Link link = Link.newBuilder()
+					.setSrc(e.src.Encode())
+					.setDst(e.dst.Encode()).build();
+			abuild.addConnections(link);
+		});
+		ifilters.forEach((e, f) -> {
+			Link link = Link.newBuilder()
+				.setSrc(e.src.Encode())
+				.setDst(e.dst.Encode()).build();
+			abuild.addInternalFilters(NewPipelet.InternalFilter.newBuilder()
+					.setLink(link).setFilter(f));
+		});
+		abuild.setExternalFilter(efilter);
+		cbuild.setExtension(NewPipelet.args, abuild.build());
+
 		return cbuild.build();
 	}
 

@@ -10,6 +10,8 @@ import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.HashMap;
+import java.util.List;
 class ServerAgent {
 	private static final int DEFAULT_PORT = 10516;
 	private static final String DEFAULT_ADDR = "127.0.0.1";
@@ -42,6 +44,18 @@ class ServerAgent {
 		_channel.SendCommand(_serde.NewInstance(type, id));
 		_channel.GetResponse();
 	}	
+
+	public void DestroyInstance(String id)  throws IOException, ServerAgentException {
+		_channel.SendCommand(_serde.KillInstance(id));
+		_channel.GetResponse();
+	}
+
+	public void NewPipelet(String type, HashMap<String, String> nfs, List<Edge> connections,
+			HashMap<Edge, String> ifilters, String efilter) throws IOException, ServerAgentException {
+		_channel.SendCommand(_serde.NewPipelet(
+			type, nfs, connections, ifilters, efilter));
+		_channel.GetResponse();
+	}
 
 	public void StartBess() throws IOException, ServerAgentException {
 		_channel.SendCommand(_serde.StartBess());
