@@ -32,4 +32,9 @@ public class Server {
             return false;
         }
     }
+
+    public void free(double cores, double memory) {
+        usedCores -= cores;
+        usedMemory -= memory;
+    }
 }

@@ -3,6 +3,7 @@ package pipelet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 public class PipeletInstance {
 
@@ -17,6 +18,12 @@ public class PipeletInstance {
     }
 
     public void clearPlacement() {
+        for (Map.Entry<Vertex, Server> vertexServerEntry : placement.entrySet()) {
+            Server server = vertexServerEntry.getValue();
+            Vertex node = vertexServerEntry.getKey();
+            server.free(node.requiredCores(), node.requiredMemory());
+        }
+
         placement.clear();
     }
 
@@ -45,9 +52,7 @@ public class PipeletInstance {
         Iterator<Server> s = servers.iterator();
         Server server = s.next();
 
-        for (Iterator<Vertex> n = nodes.iterator(); n.hasNext();) {
-            Vertex node = n.next();
-
+        for (Vertex node : nodes) {
             while (!server.satisfy(node.requiredCores(), node.requiredMemory()) && s.hasNext()) {
                 server = s.next();
             }
