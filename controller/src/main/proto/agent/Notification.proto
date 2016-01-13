@@ -1,0 +1,11 @@
+package e2.proto.agent;
+
+message Upcall {
+    enum Type {
+        Overload = 1;
+        Underload = 2;
+    }
+    required Type type = 1;
+    required string pipelet_id = 2;
+    required string nf_id = 3;
+}

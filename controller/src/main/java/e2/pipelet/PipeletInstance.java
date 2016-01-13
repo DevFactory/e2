@@ -1,4 +1,4 @@
-package pipelet;
+package e2.pipelet;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -17,6 +17,10 @@ public class PipeletInstance {
         this.type = type;
     }
 
+    public int getId() {
+        return id;
+    }
+
     public void clearPlacement() {
         for (Map.Entry<Vertex, Server> vertexServerEntry : placement.entrySet()) {
             Server server = vertexServerEntry.getValue();
@@ -30,7 +34,7 @@ public class PipeletInstance {
     private boolean isFeasiblePlacement(List<Server> servers) {
         double totalAvailableCores = 0.0, totalAvailableMemory = 0.0;
         double totalRequiredCores = 0.0, totalRequiredMemory = 0.0;
-        List<Vertex> nodes = type.getNodes();
+        List<Vertex> nodes = type.getRealNodes();
         for (Server s : servers) {
             totalAvailableCores += s.availableCores();
             totalAvailableMemory += s.availableMemory();
@@ -48,7 +52,7 @@ public class PipeletInstance {
         if (!feasible) {
             return false;
         }
-        List<Vertex> nodes = type.getNodes();
+        List<Vertex> nodes = type.getRealNodes();
         Iterator<Server> s = servers.iterator();
         Server server = s.next();
 

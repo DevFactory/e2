@@ -1,4 +1,4 @@
-package pipelet;
+package e2.pipelet;
 
 public final class Vertex {
     private String type = null;
@@ -7,6 +7,14 @@ public final class Vertex {
     public Vertex(String type, String name) {
         this.type = type;
         this.name = name;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public double requiredCores() {

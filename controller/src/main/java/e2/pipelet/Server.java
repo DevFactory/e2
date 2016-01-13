@@ -1,4 +1,4 @@
-package pipelet;
+package e2.pipelet;
 
 public class Server {
     private double totalCores = 0.0;

@@ -1,21 +1,23 @@
-package pipelet;
+package e2.pipelet;
 
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class ServerTest {
 
     @Test
     public void testAvailableCores() throws Exception {
         Server s = new Server(18.0, 0.0);
-        assertEquals(s.availableCores(), 18.0, 1e-15);
+        assertEquals(18.0, s.availableCores(), 1e-15);
     }
 
     @Test
     public void testAvailableMemory() throws Exception {
         Server s = new Server(18.0, 0.0);
-        assertEquals(s.availableMemory(), 0.0, 1e-15);
+        assertEquals(0.0, s.availableMemory(), 1e-15);
     }
 
     @Test

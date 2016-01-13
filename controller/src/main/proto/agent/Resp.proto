@@ -1,0 +1,26 @@
+package e2.proto.agent;
+
+message Response {
+    enum Status {
+        OK = 1;
+        Err = 2;
+        StatusString = 3;
+    }
+    extensions 10 to max;
+    required Status status = 1;
+}
+
+message Error {
+    extend Response {
+        optional Error ret = 10;
+    }
+    required int32 errno = 1;
+    required string error = 2;
+}
+
+message MachineStatus {
+    extend Response {
+        optional MachineStatus ret = 11;
+    }
+    required string status = 1;
+}

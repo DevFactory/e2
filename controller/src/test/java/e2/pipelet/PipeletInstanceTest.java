@@ -1,11 +1,12 @@
-package pipelet;
+package e2.pipelet;
 
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class PipeletInstanceTest {
 
@@ -24,33 +25,25 @@ public class PipeletInstanceTest {
         nodes.add(n2);
         nodes.add(n3);
 
-        Edge e1 = new Edge(n1, n3);
-        Edge e2 = new Edge(n2, n3);
+        Edge e1 = new Edge(n1, n3, 0, 0, "filter1");
+        Edge e2 = new Edge(n2, n3, 0, 0, "filter2");
         List<Edge> edges = new ArrayList<Edge>();
         edges.add(e1);
         edges.add(e2);
 
-        PipeletType type = new PipeletType(nodes, edges);
+        PipeletType type = new PipeletType(nodes, edges, "anything", "anything");
 
-        List<Vertex> fwd = new ArrayList<Vertex>();
-        fwd.add(n1);
-        type.addForwardEntryPoints(fwd);
-
-        List<Vertex> rev = new ArrayList<Vertex>();
-        rev.add(n2);
-        type.addReverseEntryPoints(rev);
-
-        List<Vertex> exit = new ArrayList<Vertex>();
-        exit.add(n3);
-        type.addExitPoints(exit);
+        type.addForwardEntryPoint(n1, 0, "anything");
+        type.addReverseEntryPoint(n2, 0, "anything");
+        type.addExitPoint(n3, 0);
 
         PipeletInstance instance = new PipeletInstance(0, type);
 
         assertTrue(instance.place(servers));
-        assertEquals(servers.get(0).availableCores(), 13.0, 1e-15);
+        assertEquals(13.0, servers.get(0).availableCores(), 1e-15);
 
         instance.clearPlacement();
-        assertEquals(servers.get(0).availableCores(), 16.0, 1e-15);
+        assertEquals(16.0, servers.get(0).availableCores(), 1e-15);
     }
 
     @Test
@@ -68,29 +61,21 @@ public class PipeletInstanceTest {
         nodes.add(n2);
         nodes.add(n3);
 
-        Edge e1 = new Edge(n1, n3);
-        Edge e2 = new Edge(n2, n3);
+        Edge e1 = new Edge(n1, n3, 0, 0, "filter1");
+        Edge e2 = new Edge(n2, n3, 0, 0, "filter2");
         List<Edge> edges = new ArrayList<Edge>();
         edges.add(e1);
         edges.add(e2);
 
-        PipeletType type = new PipeletType(nodes, edges);
+        PipeletType type = new PipeletType(nodes, edges, "anything", "anything");
 
-        List<Vertex> fwd = new ArrayList<Vertex>();
-        fwd.add(n1);
-        type.addForwardEntryPoints(fwd);
-
-        List<Vertex> rev = new ArrayList<Vertex>();
-        rev.add(n2);
-        type.addReverseEntryPoints(rev);
-
-        List<Vertex> exit = new ArrayList<Vertex>();
-        exit.add(n3);
-        type.addExitPoints(exit);
+        type.addForwardEntryPoint(n1, 0, "anything");
+        type.addReverseEntryPoint(n2, 0, "anything");
+        type.addExitPoint(n3, 0);
 
         PipeletInstance instance = new PipeletInstance(0, type);
 
         assertTrue(instance.place(servers));
-        assertEquals(servers.get(0).availableCores(), 13.0, 1e-15);
+        assertEquals(13.0, servers.get(0).availableCores(), 1e-15);
     }
 }

@@ -1,0 +1,125 @@
+package e2.proto.agent;
+
+message Command {
+    enum Commands {
+        ListRunning = 1;
+        ListMarked = 2;
+        StartBess = 3;
+        StopBess = 4;
+        NewPipelet = 5;
+        NewInstance = 6;
+        KillInstance = 7;
+        MachineStatusString = 8;
+        RegisterForNotification = 9;
+        UnregisterFromNotification = 10;
+        TriggerNotification = 11;
+    }
+    extensions 10 to max;
+    required Commands command = 1;
+}
+
+message ListRunning {
+    extend Command {
+        optional ListRunning args = 10;
+    }
+    optional string kind = 1;
+}
+
+message ListMarked {
+    extend Command {
+        optional ListMarked args = 11;
+    }
+    optional string kind = 1;
+}
+
+message StartBess {
+    extend Command {
+        optional StartBess args = 12;
+    }
+}
+
+message StopBess {
+    extend Command {
+        optional StopBess args = 13;
+    }
+}
+
+message Link {
+    message Endpoint {
+        required string nf = 1;
+        optional int32 vport = 2;
+    }
+    required Endpoint src = 1;
+    required Endpoint dst = 2;
+}
+
+message NewPipelet {
+    extend Command {
+        optional NewPipelet args = 14;
+    }
+
+    message NF {
+        required string id = 1;
+        required string type = 2;
+    }
+
+    message InternalFilter {
+        required Link link = 1;
+        required string filter = 2;
+    }
+
+    required string type = 1;
+    repeated NF nfs = 2;
+    repeated InternalFilter internal_filters = 3;
+    required string forward_filter = 4;
+    required string reverse_filter = 6;
+    repeated Link connections = 5;
+}
+
+message NewInstance {
+    extend Command {
+        optional NewInstance args = 15;
+    }
+    required string type = 1;
+    required string instance_id = 2;
+}
+
+message KillInstance {
+    extend Command {
+        optional KillInstance args = 16;
+    }
+    required string instance_id = 1;
+}
+
+message MachineStatusString {
+    extend Command {
+        optional MachineStatusString args = 17;
+    }
+}
+
+message RegisterForNotification {
+    extend Command {
+        optional RegisterForNotification args = 18;
+    }
+}
+
+message UnregisterFromNotification {
+    extend Command {
+        optional UnregisterFromNotification args = 19;
+    }
+}
+
+message TriggerNotification {
+    extend Command {
+        optional TriggerNotification args = 20;
+    }
+
+    enum Type {
+        Overload = 1;
+        Underload = 2;
+    }
+
+    required Type type = 1;
+    required string pipelet_id = 2;
+    required string nf_id = 3;
+}

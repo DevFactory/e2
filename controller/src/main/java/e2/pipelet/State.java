@@ -1,4 +1,4 @@
-package pipelet;
+package e2.pipelet;
 
 public enum State {
     INACTIVE,
