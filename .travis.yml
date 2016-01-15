@@ -6,8 +6,8 @@ cache:
 
 sudo: false
 
-before_install:
+install:
   - bash build/install-protobuf.sh
 
-before_script:
-  - export PATH=$PATH:$HOME/protobuf/bin/
+script:
+  - mvn install -DprotocExecutable="$HOME/protobuf/bin/protoc"
