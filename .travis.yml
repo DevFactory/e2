@@ -1,5 +1,11 @@
 language: java
 
-before_install:
-  - sudo apt-get -qq update
-  - sudo apt-get install -y libprotobuf-dev protobuf-compiler
+sudo: false
+
+addons:
+  apt:
+    packages:
+    - libprotobuf-dev
+    - protobuf-compiler
+
+script: mvn clean install
