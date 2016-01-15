@@ -1,11 +1,13 @@
 language: java
 
+cache:
+  directories:
+  - $HOME/protobuf
+
 sudo: false
 
-addons:
-  apt:
-    packages:
-    - libprotobuf-dev
-    - protobuf-compiler
+before_install:
+  - bash build/install-protobuf.sh
 
-script: mvn clean install
+before_script:
+  - export PATH=$PATH:$HOME/protobuf/bin/
