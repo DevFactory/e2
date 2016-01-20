@@ -5,20 +5,12 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-import e2.cluster.Server;
-import e2.cluster.ServerManifest;
-
 import static org.junit.Assert.assertEquals;
 
 public class PipeletInstanceTest {
 
     @Test
     public void testBasic() throws Exception {
-        List<Server> servers = new ArrayList<>();
-        for (int i = 0; i < 10; ++i) {
-            servers.add(new Server(new ServerManifest(18.0, 0.0, "127.0.0.1", 8080)));
-        }
-
         Vertex n1 = new Vertex("isonf", "n1");
         Vertex n2 = new Vertex("isonf", "n2");
         Vertex n3 = new Vertex("isonf", "n3");
