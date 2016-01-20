@@ -1,45 +1,85 @@
 package e2.pipelet;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import e2.agent.ServerAgentException;
+import e2.cluster.Server;
+import e2.cluster.Switch;
 
 public class PipeletManager {
-    private static PipeletManager instance = null;
+    private List<PipeletType> types = new ArrayList<>();
+    private List<PipeletInstance> instances = new ArrayList<>();
+    private List<Server> servers = new ArrayList<>();
+    private Switch hardwareSwitch = null;
 
-    private List<PipeletType> types = new ArrayList<PipeletType>();
-    private List<PipeletInstance> instances = new ArrayList<PipeletInstance>();
-    private List<Server> servers = new ArrayList<Server>();
+    private Map<PipeletInstance, Server> placement = new HashMap<>();
 
-    public boolean addType(PipeletType type) {
-        return types.add(type);
+    public PipeletManager(String switchAddress) {
+        hardwareSwitch = new Switch(switchAddress);
     }
 
-    public boolean addInstance(PipeletInstance instance) {
-        return instances.add(instance);
-    }
-
-    public boolean removeInstance(PipeletInstance instance) {
-        instance.clearPlacement();
-        return instances.remove(instance);
-    }
-
-    public boolean removeInstance(int id) {
-        PipeletInstance instance = null;
-        for (PipeletInstance i : instances) {
-            if (i.getId() == id) {
-                instance = i;
-                break;
-            }
+    public void addType(PipeletType type) throws IOException, ServerAgentException {
+        for (Server server : servers) {
+            server.addPipeletType(type);
         }
-        return (instance != null) && removeInstance(instance);
+        types.add(type);
     }
 
-    public boolean placeInstance(PipeletInstance instance) throws Exception {
-        return instance.place(servers);
+    public void addServer(Server server) {
+        hardwareSwitch.addServer();
+        servers.add(server);
     }
 
-    public boolean addServer(Server server) {
-        return servers.add(server);
+    public void addInstance(PipeletInstance instance) throws Exception {
+        PipeletType type = instance.getType();
+        double requiredCores = type.getRealNodes()
+                .stream()
+                .mapToDouble(Vertex::requiredCores)
+                .sum();
+        double requiredMemory = type.getRealNodes()
+                .stream()
+                .mapToDouble(Vertex::requiredMemory)
+                .sum();
+        Server destination = servers.stream()
+                .filter(server -> server.satisfy(requiredCores, requiredMemory))
+                .findFirst()
+                .orElseThrow(() -> new Exception("No available server for instance " + instance));
+
+        destination.runPipeletInstance(instance);
+
+        destination.consume(requiredCores, requiredMemory);
+        placement.put(instance, destination);
+        instances.add(instance);
     }
 
+    public void removeInstance(PipeletInstance instance) throws IOException, ServerAgentException {
+        double requiredCores = instance.getType().getRealNodes()
+                .stream()
+                .mapToDouble(Vertex::requiredCores)
+                .sum();
+        double requiredMemory = instance.getType().getRealNodes()
+                .stream()
+                .mapToDouble(Vertex::requiredMemory)
+                .sum();
+
+        Server server = placement.get(instance);
+        server.stopPipeletInstance(instance);
+
+        server.free(requiredCores, requiredMemory);
+        placement.remove(instance);
+        instances.remove(instance);
+    }
+
+    public void removeInstance(int id) throws IOException, ServerAgentException {
+        PipeletInstance instance = instances
+                .stream()
+                .filter(i -> i.hashCode() == id)
+                .findAny()
+                .orElseThrow(() -> new RuntimeException("Removing an instance that has not been added."));
+        removeInstance(instance);
+    }
 }
