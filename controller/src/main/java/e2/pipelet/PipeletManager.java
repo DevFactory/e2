@@ -29,9 +29,23 @@ public class PipeletManager {
         types.add(type);
     }
 
-    public void addServer(Server server) {
+    public List<PipeletType> getTypes() {
+        return types;
+    }
+
+    public void addServer(Server server) throws IOException, ServerAgentException {
+        server.startBess();
+        for (PipeletType type : types) {
+            server.addPipeletType(type);
+        }
         hardwareSwitch.addServer();
         servers.add(server);
+    }
+
+    public void removeServer(Server server) throws IOException, ServerAgentException {
+        server.stopBess();
+        hardwareSwitch.removeServer();
+        servers.remove(server);
     }
 
     public void addInstance(PipeletInstance instance) throws Exception {
@@ -81,5 +95,12 @@ public class PipeletManager {
                 .findAny()
                 .orElseThrow(() -> new RuntimeException("Removing an instance that has not been added."));
         removeInstance(instance);
+    }
+
+    public PipeletInstance findInstanceById(int id) {
+        return instances.stream()
+                .filter(i -> i.hashCode() == id)
+                .findAny()
+                .orElseThrow(() -> new RuntimeException("Instance not found."));
     }
 }

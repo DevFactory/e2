@@ -3,12 +3,20 @@ package e2;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 import e2.agent.ServerAgentException;
+import e2.agent.notification.BaseNotification;
+import e2.agent.notification.ErrorNotification;
+import e2.agent.notification.OverloadNotification;
+import e2.agent.notification.UnderloadNotification;
 import e2.cluster.Server;
 import e2.cluster.ServerManifest;
 import e2.pipelet.Edge;
+import e2.pipelet.PipeletInstance;
 import e2.pipelet.PipeletManager;
 import e2.pipelet.PipeletType;
 import e2.pipelet.Vertex;
@@ -46,20 +54,57 @@ public class Master {
         return type;
     }
 
-    public static void run() throws IOException, ExecutionException, ServerAgentException {
-        PipeletManager manager = new PipeletManager("192.168.0.1");
+    PipeletManager manager;
+    BlockingQueue<BaseNotification> notifications = new ArrayBlockingQueue<>(1024);
 
+    public Master(String switchAddress) throws IOException, ServerAgentException, ExecutionException {
+        manager = new PipeletManager(switchAddress);
         manager.addType(makeTestPipeletType());
 
         for (int i = 0; i < 1; ++i) {
             ServerManifest manifest = new ServerManifest(16.0, 128.0, "127.0.0.1", 10516);
-            manager.addServer(new Server(manifest));
+            manager.addServer(new Server(manifest, notifications));
+        }
+
+
+    }
+
+    public void run() throws Exception {
+        List<PipeletInstance> instances = manager.getTypes()
+                .stream()
+                .map(PipeletInstance::new)
+                .collect(Collectors.toList());
+
+        for (PipeletInstance i : instances) {
+            manager.addInstance(i);
+        }
+
+        while (true) {
+            BaseNotification n = notifications.take();
+            switch (n.type) {
+                case OVERLOAD:
+                    OverloadNotification overloadMsg = (OverloadNotification) n;
+                    System.out.println("Pipelet " + overloadMsg.pipeletInstanceId + " on server " + overloadMsg.source + "is overloaded.");
+                    break;
+                case UNDERLOAD:
+                    UnderloadNotification underloadMsg = (UnderloadNotification) n;
+                    System.out.println("Pipelet " + underloadMsg.pipeletInstanceId + " on server " + underloadMsg.source + "is underloaded.");
+                    break;
+                case ERROR:
+                    ErrorNotification errorMsg = (ErrorNotification) n;
+                    System.out.println("Exception " + errorMsg.error.toString() + " from server " + errorMsg.source);
+                    break;
+                default:
+                    System.out.println("Unrecognized notification type " + n.type);
+            }
         }
 
     }
 
-    public static void main(String[] args) throws IOException, ExecutionException, ServerAgentException {
+    public static void main(String[] args) throws Exception {
         printLogo();
-        run();
+
+        Master instance = new Master("192.168.0.1");
+        instance.run();
     }
 }

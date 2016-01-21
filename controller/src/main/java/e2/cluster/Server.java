@@ -1,11 +1,16 @@
 package e2.cluster;
 
 import java.io.IOException;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 
 import e2.agent.NotificationAgent;
 import e2.agent.ServerAgent;
 import e2.agent.ServerAgentException;
+import e2.agent.notification.BaseNotification;
+import e2.agent.notification.ErrorNotification;
+import e2.agent.notification.OverloadNotification;
+import e2.agent.notification.UnderloadNotification;
 import e2.pipelet.PipeletInstance;
 import e2.pipelet.PipeletType;
 
@@ -15,11 +20,37 @@ public class Server {
     private ServerAgent agent;
     private NotificationAgent notification;
 
-    public Server(ServerManifest manifest) throws IOException, ExecutionException {
+    public Server(ServerManifest manifest, BlockingQueue<BaseNotification> notifications) throws IOException, ExecutionException {
         totalResources = new Resource(manifest.cores, manifest.memory);
         usedResources = new Resource(0.0, 0.0);
         agent = new ServerAgent(manifest.address, manifest.port);
+
         notification = new NotificationAgent(manifest.address, manifest.port);
+
+        notification.AwaitNotification(
+                // NotificationCallback
+                (NotificationAgent nAgent, NotificationAgent.NotificationType type, String p, String nf) -> {
+                    BaseNotification notification;
+                    if (type == NotificationAgent.NotificationType.Overload) {
+                        notification = new OverloadNotification(nAgent, this, Integer.parseInt(p), Integer.parseInt(nf));
+                    } else {
+                        notification = new UnderloadNotification(nAgent, this, Integer.parseInt(p), Integer.parseInt(nf));
+                    }
+                    try {
+                        notifications.put(notification);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                },
+                // FailureNotification
+                (NotificationAgent nAgent, Throwable err) -> {
+                    try {
+                        notifications.put(new ErrorNotification(nAgent, this, err));
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+        );
     }
 
     public double availableCores() {
@@ -47,6 +78,14 @@ public class Server {
     public void free(double cores, double memory) {
         usedResources.core -= cores;
         usedResources.memory -= memory;
+    }
+
+    public void startBess() throws IOException, ServerAgentException {
+        agent.StartBess();
+    }
+
+    public void stopBess() throws IOException, ServerAgentException {
+        agent.StopBess();
     }
 
     public void addPipeletType(PipeletType type) throws IOException, ServerAgentException {
