@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import e2.agent.ServerAgentException;
@@ -14,14 +15,26 @@ import e2.agent.notification.ErrorNotification;
 import e2.agent.notification.OverloadNotification;
 import e2.agent.notification.UnderloadNotification;
 import e2.cluster.Server;
-import e2.cluster.ServerManifest;
+import e2.conf.Config;
 import e2.pipelet.Edge;
 import e2.pipelet.PipeletInstance;
 import e2.pipelet.PipeletManager;
 import e2.pipelet.PipeletType;
 import e2.pipelet.Vertex;
 
-public class Master {
+public class Main {
+    private static final Logger log = Logger.getLogger(Main.class.getName());
+    BlockingQueue<BaseNotification> notifications = new ArrayBlockingQueue<>(1024);
+    PipeletManager manager;
+    // Config
+    Config config;
+
+    public Main() {
+        log.info("Loading configurations...");
+        config = new Config(true);
+        log.info("Configurations loaded.");
+    }
+
     private static void printLogo() {
         System.out.println("      __         __  _              __       ");
         System.out.println(" ___ / /__ ____ / /_(_)___  ___ ___/ /__ ____ ");
@@ -54,19 +67,60 @@ public class Master {
         return type;
     }
 
-    PipeletManager manager;
-    BlockingQueue<BaseNotification> notifications = new ArrayBlockingQueue<>(1024);
+    public static void main(String[] args) {
+        printLogo();
 
-    public Master(String switchAddress) throws IOException, ServerAgentException, ExecutionException {
-        manager = new PipeletManager(switchAddress);
-        manager.addType(makeTestPipeletType());
+        //Options options = new Options();
+        //options.addOption("config", true, "Config file");
 
-        for (int i = 0; i < 1; ++i) {
-            ServerManifest manifest = new ServerManifest(16.0, 128.0, "127.0.0.1", 10516);
-            manager.addServer(new Server(manifest, notifications));
+        //CommandLineParser parser = new DefaultParser();
+        //CommandLine line;
+        //try {
+        //    line = parser.parse(options, args);
+        //} catch (ParseException exc) {
+        //    log.log(Level.SEVERE, "Parsing failure. Error: {0}", exc.getMessage());
+        //    return;
+        //}
+
+        //String configFile = line.getOptionValue("config");
+
+        Main instance = new Main();
+        try {
+            instance.Init();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
         }
 
+        try {
+            instance.run();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
+    public void Init() throws IOException, ServerAgentException, ExecutionException {
+        String swAddr = config.get("e2.switch");
+
+        manager = new PipeletManager(swAddr);
+        manager.addType(makeTestPipeletType());
+
+        int numServer = Integer.parseInt(config.get("e2.server.count"));
+        log.info("Configurations loaded.");
+        log.info(String.format("HW switch IP address: %s. %d servers in total.", swAddr, numServer));
+
+        for (int i = 0; i < numServer; ++i) {
+            double cpu = Double.parseDouble(config.get("e2.server." + i + ".cpu"));
+            double mem = Double.parseDouble(config.get("e2.server." + i + ".mem"));
+            String ip = config.get("e2.server." + i + ".ip");
+            int port = Integer.parseInt(config.get("e2.server." + i + ".port"));
+
+            log.info(String.format("Adding server %s:%d with %.2f CPUs and %.2f GB Mem.",
+                    ip, port, cpu, mem));
+
+            manager.addServer(new Server(notifications,
+                    cpu, mem, ip, port));
+        }
     }
 
     public void run() throws Exception {
@@ -99,12 +153,5 @@ public class Master {
             }
         }
 
-    }
-
-    public static void main(String[] args) throws Exception {
-        printLogo();
-
-        Master instance = new Master("192.168.0.1");
-        instance.run();
     }
 }

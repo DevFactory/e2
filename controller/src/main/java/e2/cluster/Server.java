@@ -3,6 +3,7 @@ package e2.cluster;
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
+import java.util.logging.Logger;
 
 import e2.agent.NotificationAgent;
 import e2.agent.ServerAgent;
@@ -15,18 +16,26 @@ import e2.pipelet.PipeletInstance;
 import e2.pipelet.PipeletType;
 
 public class Server {
+    private static final Logger log = Logger.getLogger(Server.class.getName());
+
     private Resource totalResources;
     private Resource usedResources;
     private ServerAgent agent;
     private NotificationAgent notification;
 
-    public Server(ServerManifest manifest, BlockingQueue<BaseNotification> notifications) throws IOException, ExecutionException {
-        totalResources = new Resource(manifest.cores, manifest.memory);
+    public Server(BlockingQueue<BaseNotification> notifications,
+                  double core,
+                  double mem,
+                  String ip,
+                  int port) throws IOException, ExecutionException {
+        totalResources = new Resource(core, mem);
         usedResources = new Resource(0.0, 0.0);
-        agent = new ServerAgent(manifest.address, manifest.port);
 
-        notification = new NotificationAgent(manifest.address, manifest.port);
+        log.info(String.format("Connecting to %s:%d.", ip, port));
+        agent = new ServerAgent(ip, port);
 
+        log.info(String.format("Listening on %s:%d for events.", ip, port));
+        notification = new NotificationAgent(ip, port);
         notification.AwaitNotification(
                 // NotificationCallback
                 (NotificationAgent nAgent, NotificationAgent.NotificationType type, String p, String nf) -> {

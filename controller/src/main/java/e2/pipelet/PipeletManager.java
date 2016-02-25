@@ -5,12 +5,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import e2.agent.ServerAgentException;
 import e2.cluster.Server;
 import e2.cluster.Switch;
 
 public class PipeletManager {
+    private static final Logger log = Logger.getLogger(PipeletManager.class.getName());
+
     private List<PipeletType> types = new ArrayList<>();
     private List<PipeletInstance> instances = new ArrayList<>();
     private List<Server> servers = new ArrayList<>();

@@ -53,9 +53,9 @@ public final class Config {
     }
 
     public String get(String key) {
-        if (properties.containsKey(key)) {
+        if (!properties.containsKey(key)) {
             throw new RuntimeException(ExceptionMessage.INVALID_CONFIGURATION_KEY.getMessage(key));
         }
-       return properties.getProperty(key);
+        return properties.getProperty(key);
     }
 }
