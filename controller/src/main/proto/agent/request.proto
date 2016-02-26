@@ -71,8 +71,7 @@ message NewPipelet {
     required string type = 1;
     repeated NF nfs = 2;
     repeated InternalFilter internal_filters = 3;
-    required string forward_filter = 4;
-    required string reverse_filter = 6;
+    required string external_filter = 4;
     repeated Link connections = 5;
 }
 

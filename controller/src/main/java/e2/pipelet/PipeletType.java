@@ -12,15 +12,12 @@ public class PipeletType {
     private List<Edge> edges = new ArrayList<Edge>();
     private List<Edge> virtualEdges = new ArrayList<Edge>();
 
-    private String forwardFilter = null;
-    private String reverseFilter = null;
+    private String externalFilter = null;
 
-    public PipeletType(List<Vertex> nodes, List<Edge> edges,
-                       String fwdFilter, String revFilter) {
+    public PipeletType(List<Vertex> nodes, List<Edge> edges, String extFilter) {
         this.nodes.addAll(nodes);
         this.edges.addAll(edges);
-        this.forwardFilter = fwdFilter;
-        this.reverseFilter = revFilter;
+        this.externalFilter = extFilter;
     }
 
     public List<Vertex> getRealNodes() {
@@ -66,11 +63,7 @@ public class PipeletType {
         return virtualEdges.add(new Edge(point, exitNode, port, -1, ""));
     }
 
-    public String getForwardFilter() {
-        return forwardFilter;
-    }
-
-    public String getReverseFilter() {
-        return reverseFilter;
+    public String getExternalFilter() {
+        return externalFilter;
     }
 }

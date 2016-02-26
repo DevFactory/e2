@@ -107,7 +107,7 @@ public final class SerializeDeserialize {
         return cbuild.build();
     }
 
-    public Command NewPipelet(String type, List<Vertex> nfs, List<Edge> connections, String forwardFilter, String reverseFilter) {
+    public Command NewPipelet(String type, List<Vertex> nfs, List<Edge> connections, String externalFilter) {
         Command.Builder cbuild = Command.newBuilder();
         cbuild.setCommand(Command.Commands.NewPipelet);
         NewPipelet.Builder abuild = NewPipelet.newBuilder();
@@ -144,8 +144,7 @@ public final class SerializeDeserialize {
                     .setFilter(e.getFilter()));
         }
 
-        abuild.setForwardFilter(forwardFilter);
-        abuild.setReverseFilter(reverseFilter);
+        abuild.setExternalFilter(externalFilter);
         cbuild.setExtension(NewPipelet.args, abuild.build());
 
         return cbuild.build();

@@ -47,7 +47,7 @@ public class ServerAgent {
 
     public void NewPipelet(String type, PipeletType pipelet)
             throws IOException, ServerAgentException {
-        _channel.SendCommand(_serde.NewPipelet(type, pipelet.getNodes(), pipelet.getEdges(), pipelet.getForwardFilter(), pipelet.getReverseFilter()));
+        _channel.SendCommand(_serde.NewPipelet(type, pipelet.getNodes(), pipelet.getEdges(), pipelet.getExternalFilter()));
         _channel.GetResponse();
     }
 

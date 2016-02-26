@@ -58,7 +58,7 @@ public class Main {
         edges.add(e1);
         edges.add(e2);
 
-        PipeletType type = new PipeletType(nodes, edges, "anything", "anything");
+        PipeletType type = new PipeletType(nodes, edges, "anything");
 
         type.addForwardEntryPoint(n1, 0, "anything");
         type.addReverseEntryPoint(n2, 0, "anything");
