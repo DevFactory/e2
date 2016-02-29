@@ -52,16 +52,18 @@ public class Main {
         nodes.add(n2);
         nodes.add(n3);
 
-        Edge e1 = new Edge(n1, n3, 0, 0, "filter1");
-        Edge e2 = new Edge(n2, n3, 0, 0, "filter2");
+        Edge e1 = new Edge(n1, n2, 0, 0, "port 80");
+        Edge e2 = new Edge(n1, n3, 0, 0, "!(port 80)");
+        Edge e3 = new Edge(n2, n3, 0, 0, "");
         List<Edge> edges = new ArrayList<>();
         edges.add(e1);
         edges.add(e2);
+        edges.add(e3);
 
-        PipeletType type = new PipeletType(nodes, edges, "anything");
+        PipeletType type = new PipeletType(nodes, edges, "");
 
-        type.addForwardEntryPoint(n1, 0, "anything");
-        type.addReverseEntryPoint(n2, 0, "anything");
+        type.addForwardEntryPoint(n1, 0, "");
+        type.addReverseEntryPoint(n1, 0, "");
         type.addExitPoint(n3, 0);
 
         return type;
@@ -121,9 +123,12 @@ public class Main {
             manager.addServer(new Server(notifications,
                     cpu, mem, ip, port));
         }
+
+        log.info("Init finished.");
     }
 
     public void run() throws Exception {
+        log.info("Creating an instance for each pipelet type.");
         List<PipeletInstance> instances = manager.getTypes()
                 .stream()
                 .map(PipeletInstance::new)
@@ -133,6 +138,7 @@ public class Main {
             manager.addInstance(i);
         }
 
+        log.info("Listening to events.");
         while (true) {
             BaseNotification n = notifications.take();
             switch (n.type) {

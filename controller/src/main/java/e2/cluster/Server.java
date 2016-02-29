@@ -22,20 +22,23 @@ public class Server {
     private Resource usedResources;
     private ServerAgent agent;
     private NotificationAgent notification;
+    private String address;
 
     public Server(BlockingQueue<BaseNotification> notifications,
                   double core,
                   double mem,
                   String ip,
-                  int port) throws IOException, ExecutionException {
+                  int port) throws IOException, ExecutionException, ServerAgentException {
         totalResources = new Resource(core, mem);
         usedResources = new Resource(0.0, 0.0);
+        address = ip;
 
         log.info(String.format("Connecting to %s:%d.", ip, port));
         agent = new ServerAgent(ip, port);
 
-        log.info(String.format("Listening on %s:%d for events.", ip, port));
+        log.info(String.format("Preparing to listen on %s:%d for events.", ip, port));
         notification = new NotificationAgent(ip, port);
+
         notification.AwaitNotification(
                 // NotificationCallback
                 (NotificationAgent nAgent, NotificationAgent.NotificationType type, String p, String nf) -> {
@@ -60,6 +63,8 @@ public class Server {
                     }
                 }
         );
+
+        log.info(String.format("Listening on %s:%d for events.", ip, port));
     }
 
     public double availableCores() {
@@ -68,6 +73,10 @@ public class Server {
 
     public double availableMemory() {
         return totalResources.memory - usedResources.memory;
+    }
+
+    public String IP() {
+        return address;
     }
 
     public boolean satisfy(double cores, double memory) {
@@ -98,18 +107,18 @@ public class Server {
     }
 
     public void addPipeletType(PipeletType type) throws IOException, ServerAgentException {
-        String typeId = Integer.toString(type.hashCode());
+        String typeId = "p" + Integer.toString(type.hashCode());
         agent.NewPipelet(typeId, type);
     }
 
     public void runPipeletInstance(PipeletInstance instance) throws IOException, ServerAgentException {
-        String typeId = Integer.toString(instance.getType().hashCode());
-        String instanceId = Integer.toString(instance.hashCode());
+        String typeId = "p" + Integer.toString(instance.getType().hashCode());
+        String instanceId = "i" + Integer.toString(instance.hashCode());
         agent.CreateInstance(typeId, instanceId);
     }
 
     public void stopPipeletInstance(PipeletInstance instance) throws IOException, ServerAgentException {
-        String instanceId = Integer.toString(instance.hashCode());
+        String instanceId = "i" + Integer.toString(instance.hashCode());
         agent.DestroyInstance(instanceId);
     }
 }

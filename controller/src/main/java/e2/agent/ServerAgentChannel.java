@@ -41,7 +41,7 @@ public class ServerAgentChannel {
         while (_lenBuf.hasRemaining()) {
             _conn.write(_lenBuf);
         }
-        System.out.println("Should send " + len + " bytes");
+        //System.out.println("Should send " + len + " bytes");
         ByteBuffer obj = ByteBuffer.wrap(serialized);
         while (obj.hasRemaining()) {
             _conn.write(obj);

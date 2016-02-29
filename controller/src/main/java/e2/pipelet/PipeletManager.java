@@ -37,11 +37,17 @@ public class PipeletManager {
     }
 
     public void addServer(Server server) throws IOException, ServerAgentException {
-        server.startBess();
+        //log.info(String.format("Starting BESS on %s.", server.IP()));
+        //server.startBess();
+
+        log.info(String.format("Adding pipelet types on %s.", server.IP()));
         for (PipeletType type : types) {
             server.addPipeletType(type);
         }
+
+        log.info(String.format("Configuring switch for %s.", server.IP()));
         hardwareSwitch.addServer();
+
         servers.add(server);
     }
 
@@ -66,6 +72,7 @@ public class PipeletManager {
                 .findFirst()
                 .orElseThrow(() -> new Exception("No available server for instance " + instance));
 
+        log.info(String.format("Running instance %d on Server %s.", instance.hashCode(), destination.IP()));
         destination.runPipeletInstance(instance);
 
         destination.consume(requiredCores, requiredMemory);
