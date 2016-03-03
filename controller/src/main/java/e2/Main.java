@@ -1,7 +1,11 @@
 package e2;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
@@ -25,9 +29,25 @@ public class Main {
     // Config
     Config config;
 
-    public Main() {
-        log.info("Loading configurations...");
-        config = new Config(true);
+    public Main(String configFile) {
+        if (configFile == null) {
+            log.info("No config specified. Loading default configurations...");
+            config = new Config(true);
+        } else {
+            try {
+                InputStream input = new FileInputStream(configFile);
+                Properties prop = new Properties();
+                prop.load(input);
+                log.info(String.format("Loading config file: %s", configFile));
+                config = new Config(prop);
+            } catch (FileNotFoundException e) {
+                log.info("Config not found. Loading default configurations...");
+                config = new Config(true);
+            } catch (IOException e) {
+                log.info("Error loading config. Loading default configurations...");
+                config = new Config(true);
+            }
+        }
         log.info("Configurations loaded.");
     }
 
@@ -59,11 +79,30 @@ public class Main {
     }
 
     public static void main(String[] args) {
+        if ((args.length % 2) == 1) {
+            log.severe("Invalid number of arguments.");
+            return;
+        }
+
+        String configFile = null;
+
+        for (int i = 0; i < args.length; i += 2) {
+            String option = args[i];
+            String value = args[i + 1];
+            switch (option) {
+                case "--config":
+                    configFile = value;
+                    break;
+                default:
+                    log.severe(String.format("Unrecognized argument: %s", option));
+                    return;
+            }
+        }
+
         printLogo();
 
-        log.info(String.format("Policy loaded.\n%s", makeTestPolicy()));
+        Main instance = new Main(configFile);
 
-        Main instance = new Main();
         try {
             instance.Init();
         } catch (Exception e) {
@@ -83,11 +122,12 @@ public class Main {
 
         manager = new PipeletManager(swAddr);
 
+        log.info("Parsing policy...");
         manager.parsePolicy(makeTestPolicy());
 
         int numServer = Integer.parseInt(config.get("e2.server.count"));
-        log.info("Configurations loaded.");
-        log.info(String.format("HW switch IP address: %s. %d servers in total.", swAddr, numServer));
+        log.info(String.format("HW switch IP address: %s. %d servers in total.",
+                swAddr, numServer));
 
         for (int i = 0; i < numServer; ++i) {
             double cpu = Double.parseDouble(config.get("e2.server." + i + ".cpu"));
