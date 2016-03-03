@@ -10,6 +10,7 @@ import java.util.logging.Logger;
 import e2.agent.ServerAgentException;
 import e2.cluster.Server;
 import e2.cluster.Switch;
+import e2.parser.PolicyCompiler;
 
 public class PipeletManager {
     private static final Logger log = Logger.getLogger(PipeletManager.class.getName());
@@ -30,6 +31,13 @@ public class PipeletManager {
             server.addPipeletType(type);
         }
         types.add(type);
+    }
+
+    public void parsePolicy(String policy) throws IOException, ServerAgentException {
+        List<PipeletType> types = PolicyCompiler.compile(policy);
+        for (PipeletType type : types) {
+            addType(type);
+        }
     }
 
     public List<PipeletType> getTypes() {

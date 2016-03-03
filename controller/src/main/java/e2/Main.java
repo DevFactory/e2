@@ -1,7 +1,6 @@
 package e2;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -16,11 +15,8 @@ import e2.agent.notification.OverloadNotification;
 import e2.agent.notification.UnderloadNotification;
 import e2.cluster.Server;
 import e2.conf.Config;
-import e2.pipelet.Edge;
 import e2.pipelet.PipeletInstance;
 import e2.pipelet.PipeletManager;
-import e2.pipelet.PipeletType;
-import e2.pipelet.Vertex;
 
 public class Main {
     private static final Logger log = Logger.getLogger(Main.class.getName());
@@ -43,48 +39,29 @@ public class Main {
         System.out.println("                                   /___/    ");
     }
 
-    private static PipeletType makeTestPipeletType() {
-        Vertex n1 = new Vertex("isonf", "n1");
-        Vertex n2 = new Vertex("isonf", "n2");
-        Vertex n3 = new Vertex("isonf", "n3");
-        List<Vertex> nodes = new ArrayList<>();
-        nodes.add(n1);
-        nodes.add(n2);
-        nodes.add(n3);
-
-        Edge e1 = new Edge(n1, n2, 0, 0, "port 80");
-        Edge e2 = new Edge(n1, n3, 0, 0, "!(port 80)");
-        Edge e3 = new Edge(n2, n3, 0, 0, "");
-        List<Edge> edges = new ArrayList<>();
-        edges.add(e1);
-        edges.add(e2);
-        edges.add(e3);
-
-        PipeletType type = new PipeletType(nodes, edges, "");
-
-        type.addForwardEntryPoint(n1, 0, "");
-        type.addReverseEntryPoint(n1, 0, "");
-        type.addExitPoint(n3, 0);
-
-        return type;
+    private static String makeTestPolicy() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("isonf fw\n");
+        sb.append("isonf ids\n");
+        sb.append("isonf nat\n");
+        sb.append("pipeline {\n");
+        sb.append("  inf: fw[0]\n");
+        sb.append("  inr: nat[1]\n");
+        sb.append("  out: fw[0] nat[1]\n");
+        sb.append("  fw[1][\"dst port 80\"] -> ids[0]\n");
+        sb.append("  fw[1][\"!(dst port 80)\"] -> nat[0]\n");
+        sb.append("  ids[1] -> nat[0]\n");
+        sb.append("  nat[0][\"src port 80\"] -> ids[1]\n");
+        sb.append("  nat[0][\"!(src port 80)\"] -> fw[1]\n");
+        sb.append("  ids[0] -> fw[1]\n");
+        sb.append("}\n");
+        return sb.toString();
     }
 
     public static void main(String[] args) {
         printLogo();
 
-        //Options options = new Options();
-        //options.addOption("config", true, "Config file");
-
-        //CommandLineParser parser = new DefaultParser();
-        //CommandLine line;
-        //try {
-        //    line = parser.parse(options, args);
-        //} catch (ParseException exc) {
-        //    log.log(Level.SEVERE, "Parsing failure. Error: {0}", exc.getMessage());
-        //    return;
-        //}
-
-        //String configFile = line.getOptionValue("config");
+        log.info(String.format("Policy loaded.\n%s", makeTestPolicy()));
 
         Main instance = new Main();
         try {
@@ -105,7 +82,8 @@ public class Main {
         String swAddr = config.get("e2.switch");
 
         manager = new PipeletManager(swAddr);
-        manager.addType(makeTestPipeletType());
+
+        manager.parsePolicy(makeTestPolicy());
 
         int numServer = Integer.parseInt(config.get("e2.server.count"));
         log.info("Configurations loaded.");
