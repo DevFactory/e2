@@ -80,7 +80,7 @@ public class PipeletManager {
                 .findFirst()
                 .orElseThrow(() -> new Exception("No available server for instance " + instance));
 
-        log.info(String.format("Running instance %d on Server %s.", instance.hashCode(), destination.IP()));
+        log.info(String.format("Running instance %s on Server %s.", instance.getName(), destination.IP()));
         destination.runPipeletInstance(instance);
 
         destination.consume(requiredCores, requiredMemory);
@@ -106,18 +106,18 @@ public class PipeletManager {
         instances.remove(instance);
     }
 
-    public void removeInstance(int id) throws IOException, ServerAgentException {
+    public void removeInstance(String instanceName) throws IOException, ServerAgentException {
         PipeletInstance instance = instances
                 .stream()
-                .filter(i -> i.hashCode() == id)
+                .filter(i -> i.getName().equals(instanceName))
                 .findAny()
                 .orElseThrow(() -> new RuntimeException("Removing an instance that has not been added."));
         removeInstance(instance);
     }
 
-    public PipeletInstance findInstanceById(int id) {
+    public PipeletInstance findInstanceById(String instanceName) {
         return instances.stream()
-                .filter(i -> i.hashCode() == id)
+                .filter(i -> i.getName().equals(instanceName))
                 .findAny()
                 .orElseThrow(() -> new RuntimeException("Instance not found."));
     }

@@ -113,12 +113,12 @@ public class Server {
 
     public void runPipeletInstance(PipeletInstance instance) throws IOException, ServerAgentException {
         String typeId = instance.getType().getName();
-        String instanceId = "i" + Integer.toString(instance.hashCode());
+        String instanceId = instance.getName();
         agent.CreateInstance(typeId, instanceId);
     }
 
     public void stopPipeletInstance(PipeletInstance instance) throws IOException, ServerAgentException {
-        String instanceId = "i" + Integer.toString(instance.hashCode());
+        String instanceId = instance.getName();
         agent.DestroyInstance(instanceId);
     }
 }

@@ -11,4 +11,8 @@ public class PipeletInstance {
     public PipeletType getType() {
         return type;
     }
+
+    public String getName() {
+        return "i" + Integer.toString(this.hashCode());
+    }
 }
