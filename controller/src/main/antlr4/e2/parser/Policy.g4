@@ -21,7 +21,7 @@ pipelineList
     ;
 
 pipeline
-    : 'pipeline' filter=TC? '{'
+    : 'pipeline' name=ID filter=TC? '{'
         'inf:' inf=vertex
         'inr:' inr=vertex
         'out:' out=vertexList

@@ -11,6 +11,8 @@
     <properties>
         <junit.version>4.12</junit.version>
         <powermock.version>1.6.4</powermock.version>
+        <jetty.version>7.6.15.v20140411</jetty.version>
+        <antlr.version>4.5.2-1</antlr.version>
     </properties>
     <dependencies>
         <dependency>

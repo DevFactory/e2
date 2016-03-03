@@ -4,28 +4,34 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PipeletType {
-    private List<Vertex> nodes = new ArrayList<Vertex>();
+    private List<Vertex> nodes = new ArrayList<>();
     private Vertex forwardEntryNode = new Vertex("INF", "INF");
     private Vertex reverseEntryNode = new Vertex("INR", "INR");
     private Vertex exitNode = new Vertex("OUT", "OUT");
 
-    private List<Edge> edges = new ArrayList<Edge>();
-    private List<Edge> virtualEdges = new ArrayList<Edge>();
+    private List<Edge> edges = new ArrayList<>();
+    private List<Edge> virtualEdges = new ArrayList<>();
 
     private String externalFilter = null;
+    private String name = null;
 
-    public PipeletType(List<Vertex> nodes, List<Edge> edges, String extFilter) {
+    public PipeletType(String name, List<Vertex> nodes, List<Edge> edges, String extFilter) {
         this.nodes.addAll(nodes);
         this.edges.addAll(edges);
         this.externalFilter = extFilter;
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public List<Vertex> getRealNodes() {
-        return new ArrayList<Vertex>(nodes);
+        return new ArrayList<>(nodes);
     }
 
     public List<Vertex> getNodes() {
-        List<Vertex> result = new ArrayList<Vertex>(nodes);
+        List<Vertex> result = new ArrayList<>(nodes);
         result.add(forwardEntryNode);
         result.add(reverseEntryNode);
         result.add(exitNode);
@@ -33,11 +39,11 @@ public class PipeletType {
     }
 
     public List<Edge> getRealEdges() {
-        return new ArrayList<Edge>(edges);
+        return new ArrayList<>(edges);
     }
 
     public List<Edge> getEdges() {
-        List<Edge> result = new ArrayList<Edge>(edges);
+        List<Edge> result = new ArrayList<>(edges);
         result.addAll(virtualEdges);
         return result;
     }

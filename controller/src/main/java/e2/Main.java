@@ -60,22 +60,20 @@ public class Main {
     }
 
     private static String makeTestPolicy() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("isonf fw\n");
-        sb.append("isonf ids\n");
-        sb.append("isonf nat\n");
-        sb.append("pipeline {\n");
-        sb.append("  inf: fw[0]\n");
-        sb.append("  inr: nat[1]\n");
-        sb.append("  out: fw[0] nat[1]\n");
-        sb.append("  fw[1][\"dst port 80\"] -> ids[0]\n");
-        sb.append("  fw[1][\"!(dst port 80)\"] -> nat[0]\n");
-        sb.append("  ids[1] -> nat[0]\n");
-        sb.append("  nat[0][\"src port 80\"] -> ids[1]\n");
-        sb.append("  nat[0][\"!(src port 80)\"] -> fw[1]\n");
-        sb.append("  ids[0] -> fw[1]\n");
-        sb.append("}\n");
-        return sb.toString();
+        return "isonf fw\n" +
+                "isonf ids\n" +
+                "isonf nat\n" +
+                "pipeline default {\n" +
+                "  inf: fw[0]\n" +
+                "  inr: nat[1]\n" +
+                "  out: fw[0] nat[1]\n" +
+                "  fw[1][\"dst port 80\"] -> ids[0]\n" +
+                "  fw[1][\"!(dst port 80)\"] -> nat[0]\n" +
+                "  ids[1] -> nat[0]\n" +
+                "  nat[0][\"src port 80\"] -> ids[1]\n" +
+                "  nat[0][\"!(src port 80)\"] -> fw[1]\n" +
+                "  ids[0] -> fw[1]\n" +
+                "}\n";
     }
 
     public static void main(String[] args) {

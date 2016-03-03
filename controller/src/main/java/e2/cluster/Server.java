@@ -107,12 +107,12 @@ public class Server {
     }
 
     public void addPipeletType(PipeletType type) throws IOException, ServerAgentException {
-        String typeId = "p" + Integer.toString(type.hashCode());
+        String typeId = type.getName();
         agent.NewPipelet(typeId, type);
     }
 
     public void runPipeletInstance(PipeletInstance instance) throws IOException, ServerAgentException {
-        String typeId = "p" + Integer.toString(instance.getType().hashCode());
+        String typeId = instance.getType().getName();
         String instanceId = "i" + Integer.toString(instance.hashCode());
         agent.CreateInstance(typeId, instanceId);
     }

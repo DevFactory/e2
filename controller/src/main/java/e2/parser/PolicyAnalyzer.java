@@ -66,7 +66,8 @@ public class PolicyAnalyzer extends PolicyBaseListener {
         String filter = (ctx.filter == null)
                 ? ""
                 : ctx.filter.getText().substring(1, ctx.filter.getText().length() - 1);
-        PipeletType type = new PipeletType(vertices, edges, filter);
+        String name = ctx.name.getText();
+        PipeletType type = new PipeletType(name, vertices, edges, filter);
 
         Endpoint inf = vertexProps.get(ctx.inf);
         type.addForwardEntryPoint(inf.v, inf.p, "");
