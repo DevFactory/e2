@@ -83,6 +83,12 @@ public class PipeletManager {
         log.info(String.format("Running instance %s on Server %s.", instance.getName(), destination.IP()));
         destination.runPipeletInstance(instance);
 
+        for (Server server: servers) {
+            // Inform all other servers
+            if (server != destination) {
+        	    server.notifyRemotePipeletInstance(instance, destination);
+	        }
+	    }
         destination.consume(requiredCores, requiredMemory);
         placement.put(instance, destination);
         instances.add(instance);

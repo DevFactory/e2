@@ -65,25 +65,12 @@ public class Controller {
     private static String makeTestPolicy() {
         StringBuilder sb = new StringBuilder();
         sb.append("click:dfwd n1\n");
-        sb.append("pipeline {\n");
+        sb.append("pipeline demo {\n");
         sb.append("  inf: n1[0]\n");
         sb.append("  inr: n1[0]\n");
         sb.append("  out: n1[0]\n");
         sb.append("}\n");
         return sb.toString();
-    //private static PipeletType makeTestPipeletType() {
-        //Vertex n1 = new Vertex("click:dfwd", "n1");
-        //List<Vertex> nodes = new ArrayList<>();
-        //nodes.add(n1);
-
-        //List<Edge> edges = new ArrayList<>();
-        //PipeletType type = new PipeletType(nodes, edges, "");
-
-        //type.addForwardEntryPoint(n1, 0, "");
-        //type.addReverseEntryPoint(n1, 0, "");
-        //type.addExitPoint(n1, 0);
-
-        //return type;
     }
 
     public static void main(String[] args) {
@@ -126,7 +113,7 @@ public class Controller {
         manager = new PipeletManager(swAddr);
 
         log.info("Parsing policy...");
-        manager.parsePolicy(Constants.EXAMPLE_POLICY);
+        manager.parsePolicy(makeTestPolicy());
 
         int numServer = Integer.parseInt(configuration.get(Constants.SERVER_COUNT));
 
@@ -138,12 +125,14 @@ public class Controller {
             double mem = Double.parseDouble(configuration.get("e2.server." + i + ".mem"));
             String ip = configuration.get("e2.server." + i + ".ip");
             int port = Integer.parseInt(configuration.get("e2.server." + i + ".port"));
+            String externalMac = configuration.get("e2.server." + i + ".intmac");
+            String internalMac = configuration.get("e2.server." + i + ".intmac");
 
             log.info(String.format("Adding server %s:%d with %.2f CPUs and %.2f GB Mem.",
                     ip, port, cpu, mem));
 
             manager.addServer(new Server(notifications,
-                    cpu, mem, ip, port));
+                    cpu, mem, ip, port, externalMac, internalMac));
         }
 
         log.info("Creating an instance for each pipelet type.");
@@ -153,6 +142,16 @@ public class Controller {
                 .collect(Collectors.toList());
 
         for (PipeletInstance i : instances) {
+            manager.addInstance(i);
+        }
+
+        log.info("Creating an instance for each pipelet type.");
+        List<PipeletInstance> instances2 = manager.getTypes()
+                .stream()
+                .map(PipeletInstance::new)
+                .collect(Collectors.toList());
+
+        for (PipeletInstance i : instances2) {
             manager.addInstance(i);
         }
 
