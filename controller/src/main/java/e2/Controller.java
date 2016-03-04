@@ -54,6 +54,38 @@ public class Controller {
         log.info("Configuration loaded.");
     }
 
+    private static void printLogo() {
+        System.out.println("      __         __  _              __       ");
+        System.out.println(" ___ / /__ ____ / /_(_)___  ___ ___/ /__ ____ ");
+        System.out.println("/ -_) / _ `(_-</ __/ / __/ / -_) _  / _ `/ -_)");
+        System.out.println("\\__/_/\\_,_/___/\\__/_/\\__/  \\__/\\_,_/\\_, /\\__/ ");
+        System.out.println("                                   /___/    ");
+    }
+
+    private static String makeTestPolicy() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("click:dfwd n1\n");
+        sb.append("pipeline {\n");
+        sb.append("  inf: n1[0]\n");
+        sb.append("  inr: n1[0]\n");
+        sb.append("  out: n1[0]\n");
+        sb.append("}\n");
+        return sb.toString();
+    //private static PipeletType makeTestPipeletType() {
+        //Vertex n1 = new Vertex("click:dfwd", "n1");
+        //List<Vertex> nodes = new ArrayList<>();
+        //nodes.add(n1);
+
+        //List<Edge> edges = new ArrayList<>();
+        //PipeletType type = new PipeletType(nodes, edges, "");
+
+        //type.addForwardEntryPoint(n1, 0, "");
+        //type.addReverseEntryPoint(n1, 0, "");
+        //type.addExitPoint(n1, 0);
+
+        //return type;
+    }
+
     public static void main(String[] args) {
         if ((args.length % 2) == 1) {
             log.severe("Invalid number of arguments.");
