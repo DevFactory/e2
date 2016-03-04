@@ -142,17 +142,7 @@ public class Controller {
                 .collect(Collectors.toList());
 
         for (PipeletInstance i : instances) {
-            manager.addInstance(i);
-        }
-
-        log.info("Creating an instance for each pipelet type.");
-        List<PipeletInstance> instances2 = manager.getTypes()
-                .stream()
-                .map(PipeletInstance::new)
-                .collect(Collectors.toList());
-
-        for (PipeletInstance i : instances2) {
-            manager.addInstance(i);
+            manager.addInstance(i, 1);
         }
 
         log.info("Init finished.");
