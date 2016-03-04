@@ -123,7 +123,7 @@ public class Server {
         agent.CreateInstance(typeName, instanceName);
     }
 
-    public void notifyRemotePipeletInstance(PipeletInstance instance, Server remote)  throws IOException, ServerAgentException {
+    public void notifyRemotePipeletInstance(PipeletInstance instance, Server remote) throws IOException, ServerAgentException {
         String typeName = instance.getType().getName();
         String instanceName = instance.getName();
         String macAddress = remote.internalMac;
