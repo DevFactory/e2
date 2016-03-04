@@ -115,7 +115,7 @@ public class PipeletManager {
         removeInstance(instance);
     }
 
-    public PipeletInstance findInstanceById(String instanceName) {
+    public PipeletInstance findInstanceByName(String instanceName) {
         return instances.stream()
                 .filter(i -> i.getName().equals(instanceName))
                 .findAny()

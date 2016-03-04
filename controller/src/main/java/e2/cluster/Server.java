@@ -107,18 +107,18 @@ public class Server {
     }
 
     public void addPipeletType(PipeletType type) throws IOException, ServerAgentException {
-        String typeId = type.getName();
-        agent.NewPipelet(typeId, type);
+        String typeName = type.getName();
+        agent.NewPipelet(typeName, type);
     }
 
     public void runPipeletInstance(PipeletInstance instance) throws IOException, ServerAgentException {
-        String typeId = instance.getType().getName();
-        String instanceId = instance.getName();
-        agent.CreateInstance(typeId, instanceId);
+        String typeName = instance.getType().getName();
+        String instanceName = instance.getName();
+        agent.CreateInstance(typeName, instanceName);
     }
 
     public void stopPipeletInstance(PipeletInstance instance) throws IOException, ServerAgentException {
-        String instanceId = instance.getName();
-        agent.DestroyInstance(instanceId);
+        String instanceName = instance.getName();
+        agent.DestroyInstance(instanceName);
     }
 }
