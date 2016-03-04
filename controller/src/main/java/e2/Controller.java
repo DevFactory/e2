@@ -8,11 +8,9 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import e2.agent.ServerAgentException;
 import e2.agent.notification.BaseNotification;
 import e2.agent.notification.ErrorNotification;
 import e2.agent.notification.OverloadNotification;
@@ -25,17 +23,16 @@ import e2.web.ControllerUIWebServer;
 
 public class Controller {
     private static final Logger log = Logger.getLogger(Controller.class.getName());
-
     BlockingQueue<BaseNotification> notifications = new ArrayBlockingQueue<>(1024);
     PipeletManager manager;
-
     // Configuration
     Configuration configuration;
-
     // Web server
     ControllerUIWebServer webServer;
 
     public Controller(String configFile) {
+        System.out.print(Constants.LOGO);
+
         if (configFile == null) {
             log.info("No configuration specified. Loading the default configuration...");
             configuration = new Configuration(true);
@@ -55,35 +52,6 @@ public class Controller {
             }
         }
         log.info("Configuration loaded.");
-
-        log.info("Starting web server.");
-        webServer = new ControllerUIWebServer(this, configuration);
-        webServer.startWebServer();
-    }
-
-    private static void printLogo() {
-        System.out.println("      __         __  _              __       ");
-        System.out.println(" ___ / /__ ____ / /_(_)___  ___ ___/ /__ ____ ");
-        System.out.println("/ -_) / _ `(_-</ __/ / __/ / -_) _  / _ `/ -_)");
-        System.out.println("\\__/_/\\_,_/___/\\__/_/\\__/  \\__/\\_,_/\\_, /\\__/ ");
-        System.out.println("                                   /___/    ");
-    }
-
-    private static String makeTestPolicy() {
-        return "isonf fw\n" +
-                "isonf ids\n" +
-                "isonf nat\n" +
-                "pipeline default {\n" +
-                "  inf: fw[0]\n" +
-                "  inr: nat[1]\n" +
-                "  out: fw[0] nat[1]\n" +
-                "  fw[1][\"dst port 80\"] -> ids[0]\n" +
-                "  fw[1][\"!(dst port 80)\"] -> nat[0]\n" +
-                "  ids[1] -> nat[0]\n" +
-                "  nat[0][\"src port 80\"] -> ids[1]\n" +
-                "  nat[0][\"!(src port 80)\"] -> fw[1]\n" +
-                "  ids[0] -> fw[1]\n" +
-                "}\n";
     }
 
     public static void main(String[] args) {
@@ -107,32 +75,29 @@ public class Controller {
             }
         }
 
-        printLogo();
-
         Controller instance = new Controller(configFile);
 
         try {
-            instance.Init();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return;
-        }
-
-        try {
-            instance.run();
+            instance.start();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public void Init() throws IOException, ServerAgentException, ExecutionException {
+    public void start() throws Exception {
+        init();
+        startServing();
+    }
+
+    public void init() throws Exception {
         String swAddr = configuration.get(Constants.SWITCH_HOSTNAME);
         manager = new PipeletManager(swAddr);
 
         log.info("Parsing policy...");
-        manager.parsePolicy(makeTestPolicy());
+        manager.parsePolicy(Constants.EXAMPLE_POLICY);
 
         int numServer = Integer.parseInt(configuration.get(Constants.SERVER_COUNT));
+
         log.info(String.format("HW switch IP address: %s. %d servers in total.",
                 swAddr, numServer));
 
@@ -149,10 +114,6 @@ public class Controller {
                     cpu, mem, ip, port));
         }
 
-        log.info("Init finished.");
-    }
-
-    public void run() throws Exception {
         log.info("Creating an instance for each pipelet type.");
         List<PipeletInstance> instances = manager.getTypes()
                 .stream()
@@ -162,6 +123,12 @@ public class Controller {
         for (PipeletInstance i : instances) {
             manager.addInstance(i);
         }
+
+        log.info("Init finished.");
+    }
+
+    public void startServing() throws Exception {
+        startServingWebServer();
 
         log.info("Listening to events.");
         while (true) {
@@ -183,6 +150,10 @@ public class Controller {
                     System.out.println("Unrecognized notification type " + n.type);
             }
         }
+    }
 
+    public void startServingWebServer() {
+        webServer = new ControllerUIWebServer(this, configuration);
+        webServer.startWebServer();
     }
 }
