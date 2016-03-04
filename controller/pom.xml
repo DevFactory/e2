@@ -30,7 +30,7 @@
                 <archive>
                     <manifest>
                      <addClasspath>true</addClasspath>
-                     <mainClass>e2.Main</mainClass>
+                        <mainClass>e2.Controller</mainClass>
                 </manifest>
                 </archive>
             </configuration>
@@ -47,7 +47,7 @@
                  </execution>
             </executions>
             <configuration>
-                <mainClass>e2.Main</mainClass>
+                <mainClass>e2.Controller</mainClass>
             </configuration>
         </plugin>
             <plugin>

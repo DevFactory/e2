@@ -18,37 +18,47 @@ import e2.agent.notification.ErrorNotification;
 import e2.agent.notification.OverloadNotification;
 import e2.agent.notification.UnderloadNotification;
 import e2.cluster.Server;
-import e2.conf.Config;
+import e2.conf.Configuration;
 import e2.pipelet.PipeletInstance;
 import e2.pipelet.PipeletManager;
+import e2.web.ControllerUIWebServer;
 
-public class Main {
-    private static final Logger log = Logger.getLogger(Main.class.getName());
+public class Controller {
+    private static final Logger log = Logger.getLogger(Controller.class.getName());
+
     BlockingQueue<BaseNotification> notifications = new ArrayBlockingQueue<>(1024);
     PipeletManager manager;
-    // Config
-    Config config;
 
-    public Main(String configFile) {
+    // Configuration
+    Configuration configuration;
+
+    // Web server
+    ControllerUIWebServer webServer;
+
+    public Controller(String configFile) {
         if (configFile == null) {
-            log.info("No config specified. Loading default configurations...");
-            config = new Config(true);
+            log.info("No configuration specified. Loading the default configuration...");
+            configuration = new Configuration(true);
         } else {
             try {
                 InputStream input = new FileInputStream(configFile);
                 Properties prop = new Properties();
                 prop.load(input);
-                log.info(String.format("Loading config file: %s", configFile));
-                config = new Config(prop);
+                log.info(String.format("Loading configuration: %s", configFile));
+                configuration = new Configuration(prop);
             } catch (FileNotFoundException e) {
-                log.info("Config not found. Loading default configurations...");
-                config = new Config(true);
+                log.info("Configuration not found. Loading the default configuration...");
+                configuration = new Configuration(true);
             } catch (IOException e) {
-                log.info("Error loading config. Loading default configurations...");
-                config = new Config(true);
+                log.info("Error loading configuration. Loading the default configuration...");
+                configuration = new Configuration(true);
             }
         }
-        log.info("Configurations loaded.");
+        log.info("Configuration loaded.");
+
+        log.info("Starting web server.");
+        webServer = new ControllerUIWebServer(this, configuration);
+        webServer.startWebServer();
     }
 
     private static void printLogo() {
@@ -99,7 +109,7 @@ public class Main {
 
         printLogo();
 
-        Main instance = new Main(configFile);
+        Controller instance = new Controller(configFile);
 
         try {
             instance.Init();
@@ -116,22 +126,21 @@ public class Main {
     }
 
     public void Init() throws IOException, ServerAgentException, ExecutionException {
-        String swAddr = config.get("e2.switch");
-
+        String swAddr = configuration.get(Constants.SWITCH_HOSTNAME);
         manager = new PipeletManager(swAddr);
 
         log.info("Parsing policy...");
         manager.parsePolicy(makeTestPolicy());
 
-        int numServer = Integer.parseInt(config.get("e2.server.count"));
+        int numServer = Integer.parseInt(configuration.get(Constants.SERVER_COUNT));
         log.info(String.format("HW switch IP address: %s. %d servers in total.",
                 swAddr, numServer));
 
         for (int i = 0; i < numServer; ++i) {
-            double cpu = Double.parseDouble(config.get("e2.server." + i + ".cpu"));
-            double mem = Double.parseDouble(config.get("e2.server." + i + ".mem"));
-            String ip = config.get("e2.server." + i + ".ip");
-            int port = Integer.parseInt(config.get("e2.server." + i + ".port"));
+            double cpu = Double.parseDouble(configuration.get("e2.server." + i + ".cpu"));
+            double mem = Double.parseDouble(configuration.get("e2.server." + i + ".mem"));
+            String ip = configuration.get("e2.server." + i + ".ip");
+            int port = Integer.parseInt(configuration.get("e2.server." + i + ".port"));
 
             log.info(String.format("Adding server %s:%d with %.2f CPUs and %.2f GB Mem.",
                     ip, port, cpu, mem));

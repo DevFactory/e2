@@ -9,30 +9,30 @@ import java.util.Properties;
 
 import e2.exception.ExceptionMessage;
 
-public final class Config {
+public final class Configuration {
     public static final String DEFAULT_PROPERTIES = "elasticedge-default.properties";
     private final Properties properties = new Properties();
 
-    public Config(Map<String, String> props) {
+    public Configuration(Map<String, String> props) {
         if (props != null) {
             properties.putAll(props);
         }
     }
 
-    public Config(Properties props) {
+    public Configuration(Properties props) {
         if (props != null) {
             properties.putAll(props);
         }
     }
 
-    public Config() {
+    public Configuration() {
         this(true);
     }
 
-    public Config(boolean includeSystemProperties) {
+    public Configuration(boolean includeSystemProperties) {
         Properties defaultProps = new Properties();
 
-        InputStream defaultInputStream = Config.class.getClassLoader().getResourceAsStream(DEFAULT_PROPERTIES);
+        InputStream defaultInputStream = Configuration.class.getClassLoader().getResourceAsStream(DEFAULT_PROPERTIES);
         if (defaultInputStream == null) {
             throw new RuntimeException(ExceptionMessage.DEFAULT_PROPERTIES_FILE_DOES_NOT_EXIST.getMessage());
         }
@@ -57,5 +57,13 @@ public final class Config {
             throw new RuntimeException(ExceptionMessage.INVALID_CONFIGURATION_KEY.getMessage(key));
         }
         return properties.getProperty(key);
+    }
+
+    public int getInt(String key) {
+        if (!properties.containsKey(key)) {
+            throw new RuntimeException(ExceptionMessage.INVALID_CONFIGURATION_KEY.getMessage(key));
+        }
+        String value = properties.getProperty(key);
+        return Integer.parseInt(value);
     }
 }
