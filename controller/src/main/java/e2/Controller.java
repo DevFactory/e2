@@ -54,6 +54,25 @@ public class Controller {
         log.info("Configuration loaded.");
     }
 
+    private static void printLogo() {
+        System.out.println("      __         __  _              __       ");
+        System.out.println(" ___ / /__ ____ / /_(_)___  ___ ___/ /__ ____ ");
+        System.out.println("/ -_) / _ `(_-</ __/ / __/ / -_) _  / _ `/ -_)");
+        System.out.println("\\__/_/\\_,_/___/\\__/_/\\__/  \\__/\\_,_/\\_, /\\__/ ");
+        System.out.println("                                   /___/    ");
+    }
+
+    private static String makeTestPolicy() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("click:dfwd n1\n");
+        sb.append("pipeline demo {\n");
+        sb.append("  inf: n1[0]\n");
+        sb.append("  inr: n1[0]\n");
+        sb.append("  out: n1[0]\n");
+        sb.append("}\n");
+        return sb.toString();
+    }
+
     public static void main(String[] args) {
         if ((args.length % 2) == 1) {
             log.severe("Invalid number of arguments.");
@@ -94,7 +113,7 @@ public class Controller {
         manager = new PipeletManager(swAddr);
 
         log.info("Parsing policy...");
-        manager.parsePolicy(Constants.EXAMPLE_POLICY);
+        manager.parsePolicy(makeTestPolicy());
 
         int numServer = Integer.parseInt(configuration.get(Constants.SERVER_COUNT));
 
@@ -106,12 +125,14 @@ public class Controller {
             double mem = Double.parseDouble(configuration.get("e2.server." + i + ".mem"));
             String ip = configuration.get("e2.server." + i + ".ip");
             int port = Integer.parseInt(configuration.get("e2.server." + i + ".port"));
+            String externalMac = configuration.get("e2.server." + i + ".intmac");
+            String internalMac = configuration.get("e2.server." + i + ".intmac");
 
             log.info(String.format("Adding server %s:%d with %.2f CPUs and %.2f GB Mem.",
                     ip, port, cpu, mem));
 
             manager.addServer(new Server(notifications,
-                    cpu, mem, ip, port));
+                    cpu, mem, ip, port, externalMac, internalMac));
         }
 
         log.info("Creating an instance for each pipelet type.");
@@ -121,7 +142,7 @@ public class Controller {
                 .collect(Collectors.toList());
 
         for (PipeletInstance i : instances) {
-            manager.addInstance(i);
+            manager.addInstance(i, 1);
         }
 
         log.info("Init finished.");

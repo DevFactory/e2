@@ -65,7 +65,7 @@ public class PipeletManager {
         servers.remove(server);
     }
 
-    public void addInstance(PipeletInstance instance) throws Exception {
+    protected void addInstanceInternal(PipeletInstance instance, Server destination) throws Exception {
         PipeletType type = instance.getType();
         double requiredCores = type.getRealNodes()
                 .stream()
@@ -75,17 +75,40 @@ public class PipeletManager {
                 .stream()
                 .mapToDouble(Vertex::requiredMemory)
                 .sum();
-        Server destination = servers.stream()
-                .filter(server -> server.satisfy(requiredCores, requiredMemory))
-                .findFirst()
-                .orElseThrow(() -> new Exception("No available server for instance " + instance));
 
+
+        if (destination == null) {
+            destination = servers.stream()
+                    .filter(server -> server.satisfy(requiredCores, requiredMemory))
+                    .findFirst()
+                    .orElseThrow(() -> new Exception("No available server for instance " + instance));
+        }
         log.info(String.format("Running instance %s on Server %s.", instance.getName(), destination.IP()));
         destination.runPipeletInstance(instance);
 
+        for (Server server: servers) {
+            // Inform all other servers
+            if (server != destination) {
+        	    server.notifyRemotePipeletInstance(instance, destination);
+	        }
+	    }
         destination.consume(requiredCores, requiredMemory);
         placement.put(instance, destination);
         instances.add(instance);
+    }
+
+    public void addInstance(PipeletInstance instance) throws Exception {
+        addInstanceInternal(instance, null);
+    }
+
+    // Bypass placement for testing, demoing or other reasons.
+    public void addInstance(PipeletInstance instance, int server) throws Exception {
+        if (server > servers.size()) {
+            log.info("Cowardly refusing to launch on non-existent server");
+            addInstance(instance);
+        }
+        Server s = servers.get(server);
+        addInstanceInternal(instance, s);
     }
 
     public void removeInstance(PipeletInstance instance) throws IOException, ServerAgentException {

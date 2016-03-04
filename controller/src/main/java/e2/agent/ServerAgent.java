@@ -40,6 +40,11 @@ public class ServerAgent {
         _channel.GetResponse();
     }
 
+    public void CreateRemoteInstance(String type, String id, String mac) throws IOException, ServerAgentException {
+        _channel.SendCommand(_serde.NewRemoteInstance(type, id, mac));
+        _channel.GetResponse();
+    }
+
     public void DestroyInstance(String id) throws IOException, ServerAgentException {
         _channel.SendCommand(_serde.KillInstance(id));
         _channel.GetResponse();

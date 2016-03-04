@@ -17,6 +17,7 @@ import e2.proto.agent.Request.ListMarked;
 import e2.proto.agent.Request.ListRunning;
 import e2.proto.agent.Request.MachineStatusString;
 import e2.proto.agent.Request.NewInstance;
+import e2.proto.agent.Request.NewRemoteInstance;
 import e2.proto.agent.Request.NewPipelet;
 import e2.proto.agent.Request.RegisterForNotification;
 import e2.proto.agent.Request.StartBess;
@@ -95,6 +96,17 @@ public final class SerializeDeserialize {
                 NewInstance.newBuilder()
                         .setType(type)
                         .setInstanceId(id).build());
+        return cbuild.build();
+    }
+
+    public Command NewRemoteInstance(String type, String id, String mac) {
+        Command.Builder cbuild = Command.newBuilder();
+        cbuild.setCommand(Command.Commands.NewRemoteInstance);
+        cbuild.setExtension(NewRemoteInstance.args,
+                NewRemoteInstance.newBuilder()
+                        .setType(type)
+                        .setInstanceId(id)
+                        .setRemoteMac(mac).build());
         return cbuild.build();
     }
 

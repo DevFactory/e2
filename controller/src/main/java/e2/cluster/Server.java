@@ -23,15 +23,21 @@ public class Server {
     private ServerAgent agent;
     private NotificationAgent notification;
     private String address;
+    private String externalMac;
+    private String internalMac;
 
     public Server(BlockingQueue<BaseNotification> notifications,
                   double core,
                   double mem,
                   String ip,
-                  int port) throws IOException, ExecutionException, ServerAgentException {
+                  int port,
+                  String externalMac,
+                  String internalMac) throws IOException, ExecutionException, ServerAgentException {
         totalResources = new Resource(core, mem);
         usedResources = new Resource(0.0, 0.0);
         address = ip;
+        this.externalMac = externalMac;
+        this.internalMac = internalMac;
 
         log.info(String.format("Connecting to %s:%d.", ip, port));
         agent = new ServerAgent(ip, port);
@@ -115,6 +121,13 @@ public class Server {
         String typeName = instance.getType().getName();
         String instanceName = instance.getName();
         agent.CreateInstance(typeName, instanceName);
+    }
+
+    public void notifyRemotePipeletInstance(PipeletInstance instance, Server remote)  throws IOException, ServerAgentException {
+        String typeName = instance.getType().getName();
+        String instanceName = instance.getName();
+        String macAddress = remote.internalMac;
+        agent.CreateRemoteInstance(typeName, instanceName, macAddress);
     }
 
     public void stopPipeletInstance(PipeletInstance instance) throws IOException, ServerAgentException {
