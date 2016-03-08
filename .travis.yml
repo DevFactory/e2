@@ -2,7 +2,7 @@ addons:
   artifacts:
     debug: true
     paths: [libs.zip, build.zip]
-    target_paths: 76cc1c1c-fbd4-4334-9f81-1f889c6f82d8
+    target_paths: ba49a0e6-43d0-497c-8509-1707e1fa18b4
 cache:
   directories: [$HOME/protobuf]
 install: [bash build/install-protobuf.sh]
@@ -10,4 +10,4 @@ jdk: [oraclejdk8]
 language: java
 script: [mvn install -DprotocExecutable="$HOME/protobuf/bin/protoc", ./df-build.sh]
 sudo: false
-# Modified by Insights Service at 2016-03-08 14:26:54.085816
+# Modified by Insights Service at 2016-03-08 14:41:09.880702
